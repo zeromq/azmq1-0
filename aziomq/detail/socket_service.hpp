@@ -302,11 +302,8 @@ namespace detail {
             return ec;
         }
 
-        endpoint_type endpoint(implementation_type const& impl,
-                               boost::system::error_code & ec) const {
+        endpoint_type endpoint(implementation_type const& impl) const {
             unique_lock l{ *impl };
-            if (!impl->endpoint_.empty())
-                ec = make_error_code(boost::system::errc::not_connected);
             return impl->endpoint_;
         }
 
