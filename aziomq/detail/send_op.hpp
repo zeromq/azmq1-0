@@ -18,8 +18,6 @@
 #include <zmq.h>
 #include <iterator>
 
-#include <iostream>
-
 namespace aziomq {
 namespace detail {
 
@@ -41,7 +39,6 @@ public:
         o->ec_ = boost::system::error_code();
         o->bytes_transferred_ += socket_ops::send(o->buffers_, socket, o->flags_ | ZMQ_DONTWAIT, o->ec_);
         if (o->ec_) {
-            std::cout << "send error " << o->ec_ << std::endl;
             return !o->try_again();
         }
         return true;

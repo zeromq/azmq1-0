@@ -107,6 +107,20 @@ public:
             throw boost::system::system_error(ec);
     }
 
+    socket(socket&& other) :
+        boost::asio::basic_io_object<io_service::service_type>(other.get_io_service()) {
+        get_service().move_construct(implementation,
+                                     other.get_service(),
+                                     other.implementation);
+    }
+
+    socket& operator=(socket&& rhs) {
+        get_service().move_assign(implementation,
+                                  rhs.get_service(),
+                                  rhs.implementation);
+        return *this;
+    }
+
     socket(const socket &) = delete;
     socket & operator=(const socket &) = delete;
 
@@ -158,8 +172,8 @@ public:
      *  not yet been called/succeeded.  If multiple calls to connect
      *  or bind have occured, this call wil return only the most recent
      */
-    endpoint_type endpoint(boost::system::error_code & ec) const {
-        return get_service().endpoint(implementation, ec);
+    endpoint_type endpoint() const {
+        return get_service().endpoint(implementation);
     }
 
     /** \brief Set an option on a socket

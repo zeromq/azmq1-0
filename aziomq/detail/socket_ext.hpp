@@ -63,8 +63,8 @@ namespace detail {
 
             int name() const override { return data_.name(); }
             void const* data() const override { return data_.data(); }
-             void* data() override { return data_.data(); }
-             size_t size() override { return data_.size(); }
+            void* data() override { return data_.data(); }
+            size_t size() override { return data_.size(); }
         };
 
         struct concept {

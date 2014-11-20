@@ -15,6 +15,7 @@
 
 #include <array>
 #include <thread>
+#include <iostream>
 
 #include "../assert.ipp"
 

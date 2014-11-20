@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <string>
+#include <exception>
 
 namespace aziomq { namespace opt {
     // limits for user/aziomq-defined options (should be well outside of the valid ZMQ range)
@@ -24,14 +25,20 @@ namespace aziomq { namespace opt {
         lib_ctx_max = lib_ctx_min + 9999,
         lib_socket_min,
         lib_socket_max = lib_socket_min + 9999,
-        lib_max = lib_socket_max,
+        lib_thread_min,
+        lib_thread_max = lib_thread_min + 9999,
+        lib_max,
         user_min = 2000000,
         user_ctx_min = user_min,
         user_ctx_max = user_ctx_min + 9999,
         user_socket_min,
         user_socket_max = user_socket_min + 9999,
-        user_max = user_socket_max
+        user_max
     };
+
+    inline int operator+(limits l) {
+        return static_cast<int>(l);
+    }
 
     template<typename T, int N>
     struct base {
@@ -60,6 +67,7 @@ namespace aziomq { namespace opt {
     template<int N>
     struct boolean {
         using static_name = std::integral_constant<int, N>;
+        using value_t = int;
         int value_;
 
         boolean() : value_{ 0 } { }
@@ -76,6 +84,7 @@ namespace aziomq { namespace opt {
     template<int N>
     struct binary {
         using static_name = std::integral_constant<int, N>;
+        using value_t = void*;
         void* pv_;
         size_t size_;
 
@@ -86,6 +95,23 @@ namespace aziomq { namespace opt {
         const void* data() const { pv_; }
         void* data() { return pv_; }
         size_t size() const { size_; }
+    };
+
+    template<int N>
+    struct exception_ptr {
+        using static_name = std::integral_constant<int, N>;
+        using value_t = std::exception_ptr;
+        std::exception_ptr p_;
+
+        exception_ptr() { }
+        exception_ptr(std::exception_ptr p) : p_(p) { }
+
+        int name() const { return N; }
+        const void* data() const { &p_; }
+        void* data() { return &p_; }
+        size_t size() const { return sizeof(p_); }
+
+        std::exception_ptr value() const { return p_; }
     };
 } }
 
