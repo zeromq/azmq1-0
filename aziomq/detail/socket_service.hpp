@@ -185,7 +185,6 @@ namespace detail {
                                           bool optimize_single_threaded,
                                           boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(impl, "impl");
-            unique_lock l{ *impl };
             impl->do_open(get_io_service(), ctx_, type, optimize_single_threaded, ec);
             if (ec)
                 impl.reset();
