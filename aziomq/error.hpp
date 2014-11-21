@@ -12,8 +12,17 @@
 #include <boost/system/error_code.hpp>
 #include <string>
 
+#if !defined BOOST_NO_CXX11_INLINE_NAMESPACES
+    #define ASIOMQ_V1_INLINE_NAMESPACE_BEGIN inline namespace v1 {
+    #define ASIOMQ_V1_INLINE_NAMESPACE_END }
+#else
+    #define ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
+    #define ASIOMQ_V1_INLINE_NAMESPACE_END
+#endif
+
+
 namespace aziomq {
-inline namespace v1 {
+ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
     /** \brief custom error_category to map zeromq errors */
     class error_category : public boost::system::error_category {
     public:
@@ -22,7 +31,7 @@ inline namespace v1 {
     };
 
     boost::system::error_code make_error_code(int ev = errno);
-} // namesapce v1
+ASIOMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
 #endif // AZIOMQ_ERROR_HPP_
 

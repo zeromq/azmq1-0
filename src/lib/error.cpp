@@ -11,7 +11,7 @@
 #include <zmq.h>
 
 namespace aziomq {
-inline namespace v1 {
+ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
 const char* error_category::name() const BOOST_SYSTEM_NOEXCEPT {
     return "ZeroMQ";
 }
@@ -25,6 +25,6 @@ boost::system::error_code make_error_code(int ev) {
 
     return boost::system::error_code(ev, cat);
 }
-} // namespace v1
+ASIOMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
 

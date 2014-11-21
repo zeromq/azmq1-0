@@ -30,11 +30,11 @@ namespace detail {
     struct socket_ops;
 }
 
-inline namespace V1 {
+ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
     struct message {
         using flags_type = int;
 
-        message() noexcept {
+        message() BOOST_NOEXCEPT_OR_NOTHROW {
             auto rc = zmq_msg_init(&msg_);
             BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero");
         }
@@ -58,14 +58,14 @@ inline namespace V1 {
             : message(boost::asio::buffer(str))
         { }
 
-        message(message && rhs) noexcept
+        message(message && rhs) BOOST_NOEXCEPT_OR_NOTHROW
             : msg_(rhs.msg_)
         {
             auto rc = zmq_msg_init(&rhs.msg_);
             BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero");
         }
 
-        message& operator=(message && rhs) noexcept {
+        message& operator=(message && rhs) BOOST_NOEXCEPT_OR_NOTHROW {
             msg_ = rhs.msg_;
             auto rc = zmq_msg_init(&rhs.msg_);
             BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero");
@@ -278,6 +278,6 @@ inline namespace V1 {
     message_vector to_message_vector(BufferSequence const& buffers) {
         return message_vector(std::begin(buffers), std::end(buffers));
     }
-} // namespace V1
+ASIOMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
 #endif // AZIOMQ_MESSAGE_HPP__
