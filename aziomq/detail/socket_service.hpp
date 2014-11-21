@@ -248,7 +248,7 @@ namespace detail {
             switch (option.name()) {
             case allow_speculative::static_name::value :
                     ec = boost::system::error_code();
-                    impl->allow_speculative_ = option.value_;
+                    impl->allow_speculative_ = option.value_ ? true : false;
                 break;
             default:
                 for (auto& ext : impl->exts_) {

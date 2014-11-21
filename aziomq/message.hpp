@@ -157,7 +157,7 @@ ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
         void rebuild(std::string const& str) { rebuild(boost::asio::buffer(str)); }
 
         bool more() const {
-            return zmq_msg_more(const_cast<zmq_msg_t*>(&msg_));
+            return zmq_msg_more(const_cast<zmq_msg_t*>(&msg_)) ? true : false;
         }
 
     private:
