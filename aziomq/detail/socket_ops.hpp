@@ -16,7 +16,11 @@
 #include <boost/assert.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/socket_base.hpp>
-#include <boost/asio/posix/stream_descriptor.hpp>
+#if ! defined BOOST_ASIO_WINDOWS
+    #include <boost/asio/posix/stream_descriptor.hpp>
+#else
+    #include <boost/asio/ip/tcp.hpp>
+#endif
 #include <boost/system/error_code.hpp>
 
 #include <zmq.h>
@@ -42,8 +46,13 @@ namespace detail {
 
         using raw_socket_type = void*;
         using socket_type = std::unique_ptr<void, socket_close>;
+#if ! defined BOOST_ASIO_WINDOWS
         using native_handle_type = boost::asio::posix::stream_descriptor::native_handle_type;
         using stream_descriptor = std::unique_ptr<boost::asio::posix::stream_descriptor>;
+#else
+        using native_handle_type = boost::asio::ip::tcp::socket::native_handle_type;
+        using stream_descriptor = std::unique_ptr<boost::asio::ip::tcp::socket>;
+#endif
         using flags_type = message::flags_type;
         using more_result_type = std::pair<size_t, bool>;
 
@@ -69,8 +78,17 @@ namespace detail {
             auto rc = zmq_getsockopt(socket.get(), ZMQ_FD, &handle, &size);
             if (rc < 0)
                 ec = make_error_code();
-            else
+            else {
+#if ! defined BOOST_ASIO_WINDOWS
                 res.reset(new boost::asio::posix::stream_descriptor(io_service, handle));
+#else
+                // Use duplicated SOCKET, because ASIO socket takes ownership over it so destroys one in dtor.
+                ::WSAPROTOCOL_INFO pi;
+                ::WSADuplicateSocket(handle, ::GetCurrentProcessId(), &pi);
+                handle = ::WSASocket(pi.iAddressFamily/*AF_INET*/, pi.iSocketType/*SOCK_STREAM*/, pi.iProtocol/*IPPROTO_TCP*/, &pi, 0, 0);
+                res.reset(new boost::asio::ip::tcp::socket(io_service, boost::asio::ip::tcp::v4(), handle));
+#endif
+            }
             return res;
         }
 
