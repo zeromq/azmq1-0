@@ -10,6 +10,10 @@ if (${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
     add_definitions(-D_WIN32_WINNT=0x0600)
 
     add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
+
+    if (NOT DEFINED Boost_USE_STATIC_LIBS)
+        set(Boost_USE_STATIC_LIBS ON) # On Windows, Boost is compiled as static libraries by default
+    endif()
 endif()
 
 if(USE_LIBCXX)
