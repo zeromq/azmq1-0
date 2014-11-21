@@ -5,4 +5,4 @@ add_library(aziomq SHARED error.cpp
 target_link_libraries(aziomq ${Boost_LIBRARIES}
                              ${ZeroMQ_LIBRARIES})
 
-install(TARGETS aziomq LIBRARY DESTINATION lib)
+install(TARGETS aziomq ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION lib)
