@@ -342,12 +342,8 @@ void bounce(aziomq::socket & server, aziomq::socket & client) {
         boost::asio::buffer(buf1)
     }};
     client.send(snd_bufs, ZMQ_SNDMORE);
-    // TODO figure out why a blocking receive returns resource temporarily unavailable
-    sleep(1);
     server.receive(rcv_bufs, ZMQ_RCVMORE);
     server.send(snd_bufs, ZMQ_SNDMORE);
-    // TODO figure out why a blocking receive returns resource temporarily unavailable
-    sleep(1);
     client.receive(rcv_bufs, ZMQ_RCVMORE);
 }
 

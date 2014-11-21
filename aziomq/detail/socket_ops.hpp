@@ -194,8 +194,9 @@ namespace detail {
                               boost::system::error_code & ec) {
             size_t res = 0;
             message msg;
+            flags_type f = flags & ~ZMQ_RCVMORE;
             for (auto&& buf : buffers) {
-                auto sz = receive(msg, socket, flags, ec);
+                auto sz = receive(msg, socket, f, ec);
                 if (ec)
                     return 0;
 
@@ -204,6 +205,7 @@ namespace detail {
                     return 0;
                 }
                 res += sz;
+                f = flags;
             }
 
             if ((flags & ZMQ_RCVMORE) && msg.more()) {
@@ -221,7 +223,8 @@ namespace detail {
             message msg;
             auto more = false;
             do {
-                res += receive(msg, socket, flags | ZMQ_RCVMORE, ec);
+                res += receive(msg, socket, more ? flags | ZMQ_RCVMORE
+                                                 : flags, ec);
                 if (ec) return 0;
                 more = msg.more();
                 vec.emplace_back(std::move(msg));
