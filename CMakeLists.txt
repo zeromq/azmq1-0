@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 2.8)
 project(aziomq)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
+if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
+endif()
+
+if (${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
+    # Build for Windows Vista / Windows Server 2008 and later
+    add_definitions(-D_WIN32_WINNT=0x0600)
+
+    add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
+endif()
 
 if(USE_LIBCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
