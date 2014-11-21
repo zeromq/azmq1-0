@@ -16,6 +16,9 @@
 #include <array>
 #include <thread>
 #include <iostream>
+#include <vector>
+#include <cstdint>
+#include <memory>
 
 #include "../assert.ipp"
 
@@ -292,8 +295,94 @@ void test_send_receive_message_more_async() {
     BOOST_ASSERT_MSG(btb == 9, "btb != 9");
 }
 
+struct monitor_handler {
+    using ptr = std::shared_ptr<monitor_handler>;
+    struct event_t {
+        uint16_t e;
+        uint32_t i;
+    } __attribute__((packed));
+
+    aziomq::socket socket_;
+    event_t event_;
+    std::vector<uint16_t> events_;
+
+    monitor_handler(boost::asio::io_service & ios, aziomq::socket& s)
+        : socket_(s.monitor(ios, ZMQ_EVENT_ALL))
+    { }
+
+    boost::asio::mutable_buffer buffer() {
+        return boost::asio::buffer(&event_, sizeof(event_t));
+    }
+
+    static void async_receive(ptr p) {
+        p->socket_.async_receive(boost::asio::buffer(p->buffer()),
+            [p](boost::system::error_code const& ec, size_t) {
+                if (ec)
+                    return;
+                aziomq::message msg;
+                p->socket_.receive(msg);
+                p->events_.push_back(p->event_.e);
+                async_receive(p);
+            });
+    }
+};
+
+void bounce(aziomq::socket & server, aziomq::socket & client) {
+    const char *content = "12345678ABCDEFGH12345678abcdefgh";
+    std::array<boost::asio::const_buffer, 2> snd_bufs = {{
+        boost::asio::buffer(content, 32),
+        boost::asio::buffer(content, 32)
+    }};
+
+    std::array<char, 32> buf0;
+    std::array<char, 32> buf1;
+
+    std::array<boost::asio::mutable_buffer, 2> rcv_bufs = {{
+        boost::asio::buffer(buf0),
+        boost::asio::buffer(buf1)
+    }};
+    client.send(snd_bufs, ZMQ_SNDMORE);
+    // TODO figure out why a blocking receive returns resource temporarily unavailable
+    sleep(1);
+    server.receive(rcv_bufs, ZMQ_RCVMORE);
+    server.send(snd_bufs, ZMQ_SNDMORE);
+    // TODO figure out why a blocking receive returns resource temporarily unavailable
+    sleep(1);
+    client.receive(rcv_bufs, ZMQ_RCVMORE);
+}
+
+void test_socket_monitor() {
+    boost::asio::io_service ios;
+    boost::asio::io_service ios_m;
+
+    using socket_ptr = std::unique_ptr<aziomq::socket>;
+    socket_ptr client(new aziomq::socket(ios, ZMQ_DEALER));
+    socket_ptr server(new aziomq::socket(ios, ZMQ_DEALER));
+
+    auto client_monitor = std::make_shared<monitor_handler>(ios_m, *client);
+    auto server_monitor = std::make_shared<monitor_handler>(ios_m, *server);
+
+    std::thread t([&] {
+        monitor_handler::async_receive(server_monitor);
+        monitor_handler::async_receive(client_monitor);
+        ios_m.run();
+    });
+
+    server->bind("tcp://127.0.0.1:9998");
+    client->connect("tcp://127.0.0.1:9998");
+
+    bounce(*client, *server);
+
+    ios_m.stop();
+    t.join();
+
+    BOOST_ASSERT_MSG(!client_monitor->events_.empty(), "!client_monitor events");
+    BOOST_ASSERT_MSG(!server_monitor->events_.empty(), "!server_monitor events");
+}
+
 int main(int argc, char **argv) {
     std::cout << "Testing socket operations...";
+    std::cout.flush();
     try {
         test_set_get_options();
         test_send_receive_sync();
@@ -305,6 +394,7 @@ int main(int argc, char **argv) {
             test_send_receive_async_threads(false);
         test_send_receive_message_async();
         test_send_receive_message_more_async();
+        test_socket_monitor();
     } catch (std::exception const& e) {
         std::cout << "Failure\n" << e.what() << std::endl;
         return 1;

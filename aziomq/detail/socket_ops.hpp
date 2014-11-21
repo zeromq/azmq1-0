@@ -24,6 +24,7 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <type_traits>
 
 namespace aziomq {
@@ -195,9 +196,10 @@ namespace detail {
             message msg;
             for (auto&& buf : buffers) {
                 auto sz = receive(msg, socket, flags, ec);
-                if (ec) return 0;
-                boost::asio::const_buffer src = msg;
-                if (boost::asio::buffer_copy(buf, src) < sz) {
+                if (ec)
+                    return 0;
+
+                if (msg.buffer_copy(buf) < sz) {
                     ec = make_error_code(boost::system::errc::no_buffer_space);
                     return 0;
                 }
@@ -227,15 +229,17 @@ namespace detail {
             return res;
         }
 
-        static boost::system::error_code monitor(socket_type & socket,
-                                                 std::string const& addr,
-                                                 int events,
-                                                 boost::system::error_code & ec) {
+        static std::string monitor(socket_type & socket,
+                                   int events,
+                                   boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(socket, "Invalid socket");
+            std::ostringstream stm;
+            stm << "inproc://monitor-" << socket.get();
+            auto addr = stm.str();
             auto rc = zmq_socket_monitor(socket.get(), addr.c_str(), events);
             if (rc < 0)
                 ec = make_error_code();
-            return ec;
+            return addr;
         }
     };
 } // namespace detail

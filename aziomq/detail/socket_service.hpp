@@ -280,17 +280,6 @@ namespace detail {
             return ec;
         }
 
-        void cancel(implementation_type & impl) {
-            op_queue_type ops;
-            {
-                unique_lock l{ *impl };
-                impl->cancel_ops(reactor_op::canceled(), ops);
-            }
-
-            while (!ops.empty())
-                ops.pop_front_and_dispose(reactor_op::do_complete);
-        }
-
         boost::system::error_code shutdown(implementation_type & impl,
                                            shutdown_type what,
                                            boost::system::error_code & ec) {
@@ -410,6 +399,17 @@ namespace detail {
             }
         }
 
+        void cancel(implementation_type & impl) {
+            unique_lock l{ *impl };
+            descriptors_.unregister_descriptor(impl);
+            cancel_ops(impl);
+        }
+
+        std::string monitor(implementation_type & impl, int events,
+                            boost::system::error_code & ec) {
+            return socket_ops::monitor(impl->socket_, events, ec);
+        }
+
         private:
             context_type ctx_;
 
@@ -426,11 +426,55 @@ namespace detail {
                                                 : what >= shutdown_type::receive;
             }
 
-            struct reactor_handler {
-                std::weak_ptr<per_descriptor_data> per_descriptor_data_;
+            static void cancel_ops(implementation_type & impl) {
+                op_queue_type ops;
+                {
+                    unique_lock l{ *impl };
+                    impl->cancel_ops(reactor_op::canceled(), ops);
+                }
 
-                reactor_handler(implementation_type per_descriptor_data)
-                    : per_descriptor_data_(per_descriptor_data)
+                while (!ops.empty())
+                    ops.pop_front_and_dispose(reactor_op::do_complete);
+            }
+
+            using weak_descriptor_ptr = std::weak_ptr<per_descriptor_data>;
+            struct descriptor_map {
+                ~descriptor_map() {
+                    lock_type l{ mutex_ };
+                    for(auto&& descriptor : map_)
+                        if (auto impl = descriptor.second.lock()) {
+                            auto handle = impl->sd_->native_handle();
+                            cancel_ops(impl);
+                        }
+                }
+
+                void register_descriptor(implementation_type & impl) {
+                    lock_type l{ mutex_ };
+                    auto handle = impl->sd_->native_handle();
+                    map_.emplace(handle, impl);
+                }
+
+                void unregister_descriptor(implementation_type & impl) {
+                    lock_type l{ mutex_ };
+                    auto handle = impl->sd_->native_handle();
+                    map_.erase(handle);
+                }
+
+            private:
+                mutable std::mutex mutex_;
+                using lock_type = std::unique_lock<std::mutex>;
+                using key_type = socket_ops::native_handle_type;
+                boost::container::flat_map<key_type, weak_descriptor_ptr> map_;
+            };
+
+            struct reactor_handler {
+                descriptor_map & descriptors_;
+                weak_descriptor_ptr per_descriptor_data_;
+
+                reactor_handler(descriptor_map & descriptors,
+                                implementation_type per_descriptor_data)
+                    : descriptors_(descriptors)
+                    , per_descriptor_data_(per_descriptor_data)
                 { }
 
                 void operator()(boost::system::error_code const& e, size_t) const {
@@ -450,14 +494,18 @@ namespace detail {
                             p->cancel_ops(ec, ops);
 
                         if (p->scheduled_)
-                            schedule(p);
+                            schedule(descriptors_, p, true);
+                        else
+                            descriptors_.unregister_descriptor(p);
                     }
                     while (!ops.empty())
                         ops.pop_front_and_dispose(reactor_op::do_complete);
                 }
 
-                static void schedule(implementation_type & impl) {
-                    reactor_handler handler(impl);
+                static void schedule(descriptor_map & descriptors, implementation_type & impl, bool reschedule = false) {
+                    reactor_handler handler(descriptors, impl);
+                    if (!reschedule)
+                        descriptors.register_descriptor(impl);
                     int evs = 0;
                     boost::system::error_code ec;
                     evs = socket_ops::get_events(impl->socket_, ec);
@@ -465,7 +513,7 @@ namespace detail {
                         impl->sd_->get_io_service().post([handler, ec] { handler(ec, 0); });
                     } else {
                         impl->sd_->async_read_some(boost::asio::null_buffers(),
-                                                std::move(handler));
+                                                   std::move(handler));
                     }
                 }
             };
@@ -492,6 +540,8 @@ namespace detail {
                 bool asio_handler_is_continuation(deferred_completion* handler) { return true; }
             };
 
+            descriptor_map descriptors_;
+
             boost::system::error_code enqueue(implementation_type & impl,
                                             op_type o, reactor_op_ptr & op) {
                 unique_lock l{ *impl };
@@ -516,7 +566,7 @@ namespace detail {
                 if (!impl->scheduled_) {
                     impl->scheduled_ = true;
                     l.unlock();
-                    reactor_handler::schedule(impl);
+                    reactor_handler::schedule(descriptors_, impl);
                 }
                 return ec;
             }
