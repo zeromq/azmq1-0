@@ -16,6 +16,10 @@ if (${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
     endif()
 endif()
 
+if (ZMQ_STATIC)
+    add_definitions(-D ZMQ_STATIC)
+endif()
+
 if(USE_LIBCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++abi")
