@@ -9,7 +9,7 @@ if (${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
     # Build for Windows Vista / Windows Server 2008 and later
     add_definitions(-D_WIN32_WINNT=0x0600)
 
-    add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
+    add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN -D_WINSOCK_DEPRECATED_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 
     if (NOT DEFINED Boost_USE_STATIC_LIBS)
         set(Boost_USE_STATIC_LIBS ON) # On Windows, Boost is compiled as static libraries by default
