@@ -10,12 +10,14 @@
 
 #include <zmq.h>
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
+
 #include <memory>
-#include <mutex>
 
 namespace aziomq {
 namespace detail {
-using lock_type = std::lock_guard<std::mutex>;
+using lock_type = boost::lock_guard<boost::mutex>;
 lock_type::mutex_type mtx;
 std::weak_ptr<void> ctx;
 

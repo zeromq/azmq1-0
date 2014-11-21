@@ -26,13 +26,14 @@
 #include <boost/system/system_error.hpp>
 #include <boost/range/sub_range.hpp>
 #include <boost/container/flat_map.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include <memory>
 #include <typeindex>
 #include <string>
 #include <vector>
 #include <tuple>
-#include <mutex>
 
 namespace aziomq {
 namespace detail {
@@ -71,7 +72,7 @@ namespace detail {
             bool optimize_single_threaded_ = false;
             socket_type socket_;
             stream_descriptor sd_;
-            mutable std::mutex mutex_;
+            mutable boost::mutex mutex_;
             bool in_speculative_completion_ = false;
             bool scheduled_ = false;
             bool allow_speculative_ = true;
@@ -151,7 +152,7 @@ namespace detail {
             }
 
         };
-        using unique_lock = std::unique_lock<per_descriptor_data>;
+        using unique_lock = boost::unique_lock<per_descriptor_data>;
         using implementation_type = std::shared_ptr<per_descriptor_data>;
 
         explicit socket_service(boost::asio::io_service & ios)
