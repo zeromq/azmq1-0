@@ -9,10 +9,14 @@
 
 include(FindPackageHandleStandardArgs)
 
-if ("$ENV{ZMQ_ROOT}" STREQUAL "")
+if (NOT ZMQ_ROOT)
+    set(ZMQ_ROOT "$ENV{ZMQ_ROOT}")
+endif()
+
+if (NOT ZMQ_ROOT)
     find_path(_ZeroMQ_ROOT NAMES include/zmq.h)
 else()
-    set(_ZeroMQ_ROOT "$ENV{ZMQ_ROOT}")
+    set(_ZeroMQ_ROOT "${ZMQ_ROOT}")
 endif()
 
 find_path(ZeroMQ_INCLUDE_DIRS NAMES zmq.h HINTS ${_ZeroMQ_ROOT}/include)
