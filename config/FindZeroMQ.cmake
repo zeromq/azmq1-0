@@ -23,7 +23,17 @@ find_path(ZeroMQ_INCLUDE_DIRS NAMES zmq.h HINTS ${_ZeroMQ_ROOT}/include)
 
 set(_ZeroMQ_H ${ZeroMQ_INCLUDE_DIRS}/zmq.h)
 
-find_library(ZeroMQ_LIBRARIES NAMES zmq libzmq HINTS ${_ZeroMQ_ROOT}/lib)
+if (NOT ${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
+    find_library(ZeroMQ_LIBRARIES NAMES zmq HINTS ${_ZeroMQ_ROOT}/lib)
+else()
+    find_library(ZeroMQ_LIBRARY_RELEASE NAMES libzmq HINTS ${_ZeroMQ_ROOT}/lib)
+    find_library(ZeroMQ_LIBRARY_DEBUG NAMES libzmq_d HINTS ${_ZeroMQ_ROOT}/lib)
+    if (ZeroMQ_LIBRARY_DEBUG)
+        set(ZeroMQ_LIBRARIES optimized "${ZeroMQ_LIBRARY_RELEASE}" debug "${ZeroMQ_LIBRARY_DEBUG}")
+    else()
+        set(ZeroMQ_LIBRARIES "${ZeroMQ_LIBRARY_RELEASE}")
+    endif()
+endif()
 
 # TODO: implement version extracting for Windows
 if (NOT ${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
