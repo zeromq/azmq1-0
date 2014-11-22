@@ -41,7 +41,7 @@ namespace detail {
         using detached = opt::boolean<static_cast<int>(opt::limits::lib_thread_min) + 1>;
         using start = opt::boolean<static_cast<int>(opt::limits::lib_thread_min) + 2>;
         using last_error = opt::exception_ptr<static_cast<int>(opt::limits::lib_thread_min) + 3>;
- 
+
         template<typename T>
         socket make_pipe(bool defer_start, T&& data) {
             auto p = std::make_shared<model<T>>(std::forward<T>(data));

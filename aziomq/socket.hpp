@@ -601,18 +601,28 @@ public:
 
     /** \brief Initiate shutdown of socket
      *  \param what shutdown_type
+     *  \param ec set to indicate what, if any, error occurred
      */
     boost::system::error_code shutdown(shutdown_type what,
                                        boost::system::error_code & ec) {
         return get_service().shutdown(implementation, what, ec);
     }
 
+    /** \brief Initiate shutdown of socket
+     *  \param what shutdown_type
+     *  \throw boost::system::system_error
+     */
     void shutdown(shutdown_type what) {
         boost::system::error_code ec;
         if (shutdown(what, ec))
             throw boost::system::system_error(ec);
     }
 
+    /** \brief Cancel all outstanding asynchronous operations
+     */
+    void cancel() {
+        get_service().cancel(implementation);
+    }
     /** \brief Allows access to the underlying ZeroMQ socket
      *  \remark With great power, comes great responsibility
      */
@@ -679,6 +689,42 @@ public:
     boost::system::error_code get_socket_option(socket & s, Option & opt,
                                                 boost::system::error_code & ec) {
         return s.get_service().get_option<Extension>(s.implementation, opt, ec);
+    }
+
+    /** \brief monitor events on a socket
+        *  \tparam Handler handler function which conforms to the SocketMonitorHandler concept
+        *  \param ios io_service on which to bind the returned monitor socket
+        *  \param events int mask of events to publish to returned socket
+        *  \param ec error_code to set on error
+        *  \returns socket
+    **/
+    socket monitor(boost::asio::io_service & ios,
+                   int events,
+                   boost::system::error_code & ec) {
+        auto uri = get_service().monitor(implementation, events, ec);
+        socket res(ios, ZMQ_PAIR);
+        if (ec)
+            return res;
+
+        if (res.connect(uri, ec))
+            return res;
+        return res;
+    }
+
+    /** \brief monitor events on a socket
+        *  \tparam Handler handler function which conforms to the SocketMonitorHandler concept
+        *  \param ios io_service on which to bind the returned monitor socket
+        *  \param events int mask of events to publish to returned socket
+        *  \param ec error_code to set on error
+        *  \returns socket
+    **/
+    socket monitor(boost::asio::io_service & ios,
+                   int events) {
+        boost::system::error_code ec;
+        auto res = monitor(ios, events, ec);
+        if (ec)
+            throw boost::system::system_error(ec);
+        return res;
     }
 };
 
