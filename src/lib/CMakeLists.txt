@@ -1,9 +1,23 @@
-add_library(aziomq SHARED error.cpp
-                          context_ops.cpp
-                          socket_service.cpp
-                          thread_service.cpp)
+set(SOURCES
+    error.cpp
+    context_ops.cpp
+    socket_service.cpp
+    thread_service.cpp
+)
 
-target_link_libraries(aziomq ${Boost_LIBRARIES}
-                             ${ZeroMQ_LIBRARIES})
+if (${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
+    add_library(${PROJECT_NAME} STATIC ${SOURCES})
+else()
+    add_library(${PROJECT_NAME} SHARED ${SOURCES})
+endif()
 
-install(TARGETS aziomq LIBRARY DESTINATION lib)
+target_link_libraries(${PROJECT_NAME}
+    ${Boost_LIBRARIES}
+    ${ZeroMQ_LIBRARIES}
+)
+
+install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib
+)

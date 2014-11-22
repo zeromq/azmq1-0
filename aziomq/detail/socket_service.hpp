@@ -26,13 +26,14 @@
 #include <boost/system/system_error.hpp>
 #include <boost/range/sub_range.hpp>
 #include <boost/container/flat_map.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include <memory>
 #include <typeindex>
 #include <string>
 #include <vector>
 #include <tuple>
-#include <mutex>
 
 namespace aziomq {
 namespace detail {
@@ -71,7 +72,7 @@ namespace detail {
             bool optimize_single_threaded_ = false;
             socket_type socket_;
             stream_descriptor sd_;
-            mutable std::mutex mutex_;
+            mutable boost::mutex mutex_;
             bool in_speculative_completion_ = false;
             bool scheduled_ = false;
             bool allow_speculative_ = true;
@@ -81,7 +82,12 @@ namespace detail {
             std::array<op_queue_type, max_ops> op_queue_;
 
             ~per_descriptor_data() {
+#if ! defined BOOST_ASIO_WINDOWS
+                // TODO: check there is no memory leak
                 sd_.release();
+#else
+                sd_.reset();
+#endif
                 for (auto& ext : exts_)
                     ext.second.on_remove();
             }
@@ -146,7 +152,7 @@ namespace detail {
             }
 
         };
-        using unique_lock = std::unique_lock<per_descriptor_data>;
+        using unique_lock = boost::unique_lock<per_descriptor_data>;
         using implementation_type = std::shared_ptr<per_descriptor_data>;
 
         explicit socket_service(boost::asio::io_service & ios)
@@ -179,7 +185,6 @@ namespace detail {
                                           bool optimize_single_threaded,
                                           boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(impl, "impl");
-            unique_lock l{ *impl };
             impl->do_open(get_io_service(), ctx_, type, optimize_single_threaded, ec);
             if (ec)
                 impl.reset();
@@ -242,7 +247,7 @@ namespace detail {
             switch (option.name()) {
             case allow_speculative::static_name::value :
                     ec = boost::system::error_code();
-                    impl->allow_speculative_ = option.value_;
+                    impl->allow_speculative_ = option.value_ ? true : false;
                 break;
             default:
                 for (auto& ext : impl->exts_) {

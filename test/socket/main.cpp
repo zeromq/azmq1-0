@@ -49,10 +49,10 @@ void test_send_receive_sync() {
     boost::asio::io_service ios;
 
     aziomq::socket sb(ios, ZMQ_ROUTER);
-    sb.bind(subj(__PRETTY_FUNCTION__));
+    sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
     aziomq::socket sc(ios, ZMQ_DEALER);
-    sc.connect(subj(__PRETTY_FUNCTION__));
+    sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     sc.send(snd_bufs, ZMQ_SNDMORE);
 
@@ -91,11 +91,11 @@ void test_send_receive_async(bool is_speculative) {
 
     aziomq::socket sb(ios_b, ZMQ_ROUTER);
     sb.set_option(aziomq::socket::allow_speculative(is_speculative));
-    sb.bind(subj(__PRETTY_FUNCTION__));
+    sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
     aziomq::socket sc(ios_c, ZMQ_DEALER);
     sc.set_option(aziomq::socket::allow_speculative(is_speculative));
-    sc.connect(subj(__PRETTY_FUNCTION__));
+    sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
     size_t btc = 0;
@@ -135,11 +135,11 @@ void test_send_receive_async(bool is_speculative) {
 void test_send_receive_async_threads(bool optimize_single_threaded) {
     boost::asio::io_service ios_b;
     aziomq::socket sb(ios_b, ZMQ_ROUTER, optimize_single_threaded);
-    sb.bind(subj(__PRETTY_FUNCTION__));
+    sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
     boost::asio::io_service ios_c;
     aziomq::socket sc(ios_c, ZMQ_DEALER, optimize_single_threaded);
-    sc.connect(subj(__PRETTY_FUNCTION__));
+    sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
     size_t btc = 0;
@@ -186,10 +186,10 @@ void test_send_receive_message_async() {
     boost::asio::io_service ios_c;
 
     aziomq::socket sb(ios_b, ZMQ_ROUTER);
-    sb.bind(subj(__PRETTY_FUNCTION__));
+    sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
     aziomq::socket sc(ios_c, ZMQ_DEALER);
-    sc.connect(subj(__PRETTY_FUNCTION__));
+    sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
     size_t btc = 0;
@@ -242,10 +242,10 @@ void test_send_receive_message_more_async() {
     boost::asio::io_service ios_c;
 
     aziomq::socket sb(ios_b, ZMQ_ROUTER);
-    sb.bind(subj(__PRETTY_FUNCTION__));
+    sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
     aziomq::socket sc(ios_c, ZMQ_DEALER);
-    sc.connect(subj(__PRETTY_FUNCTION__));
+    sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
     size_t btc = 0;
