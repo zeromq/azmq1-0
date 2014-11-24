@@ -311,7 +311,7 @@ struct monitor_handler {
     {
         uint16_t e;
         uint32_t i;
-    } __attribute__((__packed__));
+    } __attribute__((packed));
 #endif
 
     //zmq_event_t
