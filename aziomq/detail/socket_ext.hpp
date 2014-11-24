@@ -19,9 +19,25 @@
 namespace aziomq {
 namespace detail {
     struct socket_ext {
-        template<typename T>
-        socket_ext(T data) : ptr_(new model<T>(std::move(data)))
+        template<
+            typename T,
+            class Disabler =
+                typename std::enable_if<
+                    !std::is_base_of<socket_ext, typename std::decay<T>::type>::value
+                >::type
+        >
+        socket_ext(T&& data)
+            : ptr_(new model<typename std::decay<T>::type>(std::forward<T>(data)))
         { }
+
+        // MSVS 2013 can not generate move ctor/assignment
+
+        socket_ext(socket_ext&& op): ptr_(std::move(op.ptr_)) { }
+
+        socket_ext& operator= (socket_ext&& op) {
+            ptr_ = std::move(op.ptr_);
+            return *this;
+        }
 
         void on_install(boost::asio::io_service& ios, void * socket) const {
             BOOST_ASSERT_MSG(ptr_, "reusing moved instance of socket_ext");
@@ -81,7 +97,8 @@ namespace detail {
         struct model : concept {
             T data_;
 
-            model(T data) : data_(std::move(data)) { }
+            model(const T& data): data_(data) { }
+            model(T&& data): data_(std::move(data)) { }
 
             void on_install(boost::asio::io_service & ios, void * socket) override { data_.on_install(ios, socket); }
             void on_remove() override { data_.on_remove(); }

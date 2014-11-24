@@ -82,11 +82,11 @@ namespace detail {
             std::array<op_queue_type, max_ops> op_queue_;
 
             ~per_descriptor_data() {
+
 #if ! defined BOOST_ASIO_WINDOWS
-                // TODO: check there is no memory leak
-                sd_.release();
+                sd_->release(); // Release file descriptor
 #else
-                sd_.reset();
+                sd_.reset();    // Close duplicated socket
 #endif
                 for (auto& ext : exts_)
                     ext.second.on_remove();
@@ -202,13 +202,13 @@ namespace detail {
         }
 
         template<typename Extension>
-        bool associate_ext(implementation_type & impl, Extension ext) {
+        bool associate_ext(implementation_type & impl, Extension&& ext) {
             BOOST_ASSERT_MSG(impl, "impl");
             unique_lock l{ *impl };
             exts_type::iterator it;
             bool res;
             std::tie(it, res) = impl->exts_.emplace(std::type_index(typeid(Extension)),
-                                                    socket_ext(std::move(ext)));
+                                                    socket_ext(std::forward<Extension>(ext)));
             if (res)
                 it->second.on_install(get_io_service(), impl->socket_.get());
             return res;
@@ -466,8 +466,8 @@ namespace detail {
                 }
 
             private:
-                mutable std::mutex mutex_;
-                using lock_type = std::unique_lock<std::mutex>;
+                mutable boost::mutex mutex_;
+                using lock_type = boost::unique_lock<boost::mutex>;
                 using key_type = socket_ops::native_handle_type;
                 boost::container::flat_map<key_type, weak_descriptor_ptr> map_;
             };
