@@ -202,13 +202,13 @@ namespace detail {
         }
 
         template<typename Extension>
-        bool associate_ext(implementation_type & impl, Extension ext) {
+        bool associate_ext(implementation_type & impl, Extension&& ext) {
             BOOST_ASSERT_MSG(impl, "impl");
             unique_lock l{ *impl };
             exts_type::iterator it;
             bool res;
             std::tie(it, res) = impl->exts_.emplace(std::type_index(typeid(Extension)),
-                                                    socket_ext(std::move(ext)));
+                                                    socket_ext(std::forward<Extension>(ext)));
             if (res)
                 it->second.on_install(get_io_service(), impl->socket_.get());
             return res;
@@ -466,8 +466,8 @@ namespace detail {
                 }
 
             private:
-                mutable std::mutex mutex_;
-                using lock_type = std::unique_lock<std::mutex>;
+                mutable boost::mutex mutex_;
+                using lock_type = boost::unique_lock<boost::mutex>;
                 using key_type = socket_ops::native_handle_type;
                 boost::container::flat_map<key_type, weak_descriptor_ptr> map_;
             };

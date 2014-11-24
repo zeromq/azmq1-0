@@ -297,31 +297,44 @@ void test_send_receive_message_more_async() {
 
 struct monitor_handler {
     using ptr = std::shared_ptr<monitor_handler>;
-    struct event_t {
+
+#if defined BOOST_MSVC
+#pragma pack(push, 1)
+    struct event_t
+    {
         uint16_t e;
         uint32_t i;
-    } __attribute__((packed));
+    };
+#pragma pack(pop)
+#else
+    struct event_t
+    {
+        uint16_t e;
+        uint32_t i;
+    } __attribute__((__packed__));
+#endif
 
+    //zmq_event_t
     aziomq::socket socket_;
     event_t event_;
-    std::vector<uint16_t> events_;
+    std::vector<event_t> events_;
 
     monitor_handler(boost::asio::io_service & ios, aziomq::socket& s)
         : socket_(s.monitor(ios, ZMQ_EVENT_ALL))
     { }
 
     boost::asio::mutable_buffer buffer() {
-        return boost::asio::buffer(&event_, sizeof(event_t));
+        return boost::asio::buffer(&event_, sizeof(zmq_event_t));
     }
 
     static void async_receive(ptr p) {
         p->socket_.async_receive(boost::asio::buffer(p->buffer()),
-            [p](boost::system::error_code const& ec, size_t) {
+            [p](boost::system::error_code const& ec, size_t s) {
                 if (ec)
                     return;
                 aziomq::message msg;
                 p->socket_.receive(msg);
-                p->events_.push_back(p->event_.e);
+                p->events_.push_back(p->event_);
                 async_receive(p);
             });
     }
