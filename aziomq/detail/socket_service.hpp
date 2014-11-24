@@ -82,11 +82,11 @@ namespace detail {
             std::array<op_queue_type, max_ops> op_queue_;
 
             ~per_descriptor_data() {
+
 #if ! defined BOOST_ASIO_WINDOWS
-                // TODO: check there is no memory leak
-                sd_.release();
+                sd_->release(); // Release file descriptor
 #else
-                sd_.reset();
+                sd_.reset();    // Close duplicated socket
 #endif
                 for (auto& ext : exts_)
                     ext.second.on_remove();
