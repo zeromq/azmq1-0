@@ -297,10 +297,22 @@ void test_send_receive_message_more_async() {
 
 struct monitor_handler {
     using ptr = std::shared_ptr<monitor_handler>;
-    struct event_t {
+
+#if defined BOOST_MSVC
+#pragma pack(push, 1)
+    struct event_t
+    {
+        uint16_t e;
+        uint32_t i;
+    };
+#pragma pack(pop)
+#else
+    struct event_t
+    {
         uint16_t e;
         uint32_t i;
     } __attribute__((packed));
+#endif
 
     aziomq::socket socket_;
     event_t event_;
