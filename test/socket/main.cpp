@@ -315,24 +315,24 @@ struct monitor_handler {
 #endif
 
     aziomq::socket socket_;
+    std::string role_;
     event_t event_;
     std::vector<uint16_t> events_;
 
-    monitor_handler(boost::asio::io_service & ios, aziomq::socket& s)
+    monitor_handler(boost::asio::io_service & ios, aziomq::socket& s, std::string role)
         : socket_(s.monitor(ios, ZMQ_EVENT_ALL))
+        , role_(std::move(role))
     { }
 
-    boost::asio::mutable_buffer buffer() {
-        return boost::asio::buffer(&event_, sizeof(event_t));
-    }
-
     static void async_receive(ptr p) {
-        p->socket_.async_receive(boost::asio::buffer(p->buffer()),
+        p->socket_.async_receive(boost::asio::buffer(&p->event_, sizeof(event_t)),
             [p](boost::system::error_code const& ec, size_t) {
                 if (ec)
                     return;
+                BOOST_ASSERT_MSG(p->event_.e != 0, "!event_.e");
+                BOOST_ASSERT_MSG(p->event_.i != 0, "!event_.i");
                 aziomq::message msg;
-                p->socket_.receive(msg);
+                p->socket_.receive(msg, ZMQ_RCVMORE);
                 p->events_.push_back(p->event_.e);
                 async_receive(p);
             });
@@ -367,8 +367,8 @@ void test_socket_monitor() {
     socket_ptr client(new aziomq::socket(ios, ZMQ_DEALER));
     socket_ptr server(new aziomq::socket(ios, ZMQ_DEALER));
 
-    auto client_monitor = std::make_shared<monitor_handler>(ios_m, *client);
-    auto server_monitor = std::make_shared<monitor_handler>(ios_m, *server);
+    auto client_monitor = std::make_shared<monitor_handler>(ios_m, *client, "client");
+    auto server_monitor = std::make_shared<monitor_handler>(ios_m, *server, "server");
 
     std::thread t([&] {
         monitor_handler::async_receive(server_monitor);
@@ -383,7 +383,6 @@ void test_socket_monitor() {
 
     ios_m.stop();
     t.join();
-
     BOOST_ASSERT_MSG(!client_monitor->events_.empty(), "!client_monitor events");
     BOOST_ASSERT_MSG(!server_monitor->events_.empty(), "!server_monitor events");
 }
