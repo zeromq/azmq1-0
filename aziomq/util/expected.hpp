@@ -10,8 +10,8 @@
     from the "Systematic Error Handling in C++" talk given at C++ And
     Beyond 2012
 */
-#ifndef AZIOMQ_EXPECTED_HPP_
-#define AZIOMQ_EXPECTED_HPP_
+#ifndef AZMQ_EXPECTED_HPP_
+#define AZMQ_EXPECTED_HPP_
 
 #include <boost/assert.hpp>
 #include <exception>
@@ -21,10 +21,10 @@
 #include <cassert>
 
 namespace aziomq { namespace util {
-// define AZIOMQ_LOG_UNCHECKED *BEFORE* including expected.hpp to forward declare the following
+// define AZMQ_LOG_UNCHECKED *BEFORE* including expected.hpp to forward declare the following
 // function to be called any time an exception is present and unchecked in an expected<T>
 // when it's destructor is called
-#ifdef AZIOMQ_LOG_UNCHECKED
+#ifdef AZMQ_LOG_UNCHECKED
     void log_expected_unchecked(std::exception_ptr err);
 #endif
 
@@ -61,7 +61,7 @@ public:
         }
 
     ~expected() {
-#ifdef AZIOMQ_LOG_UNCHECKED
+#ifdef AZMQ_LOG_UNCHECKED
         if (unchecked_)
             log_expected_unchecked(err_);
 #else
@@ -140,4 +140,4 @@ public:
 };
 } // namespace util
 } // namespace aziomq
-#endif // AZIOMQ_EXPECTED_HPP_
+#endif // AZMQ_EXPECTED_HPP_

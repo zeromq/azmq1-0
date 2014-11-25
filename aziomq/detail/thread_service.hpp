@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_THREAD_SERVICE_HPP_
-#define AZIOMQ_THREAD_SERVICE_HPP_
+#ifndef AZMQ_DETAIL_THREAD_SERVICE_HPP_
+#define AZMQ_DETAIL_THREAD_SERVICE_HPP_
 
 #include "../error.hpp"
 #include "../socket.hpp"
@@ -252,5 +252,5 @@ namespace detail {
     };
 } // namespace detail
 } // namespace aziomq
-#endif // AZIOMQ_THREAD_SERVICE_HPP_
+#endif // AZMQ_DETAIL_THREAD_SERVICE_HPP_
 

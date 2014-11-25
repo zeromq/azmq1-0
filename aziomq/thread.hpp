@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_THREAD_HPP_
-#define AZIOMQ_THREAD_HPP_
+#ifndef AZMQ_THREAD_HPP_
+#define AZMQ_THREAD_HPP_
 
 #include "socket.hpp"
 #include "detail/thread_service.hpp"
@@ -82,5 +82,5 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace thread
 } // namespace aziomq
-#endif // AZIOMQ_THREAD_HPP_
+#endif // AZMQ_THREAD_HPP_
 

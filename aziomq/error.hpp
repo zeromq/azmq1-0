@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_ERROR_HPP_
-#define AZIOMQ_ERROR_HPP_
+#ifndef AZMQ_ERROR_HPP_
+#define AZMQ_ERROR_HPP_
 
 #include <boost/system/error_code.hpp>
 #include <string>
@@ -33,5 +33,5 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
     boost::system::error_code make_error_code(int ev = errno);
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
-#endif // AZIOMQ_ERROR_HPP_
+#endif // AZMQ_ERROR_HPP_
 

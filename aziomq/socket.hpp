@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_IO_SOCKET_HPP_
-#define AZIOMQ_IO_SOCKET_HPP_
+#ifndef AZMQ_SOCKET_HPP_
+#define AZMQ_SOCKET_HPP_
 
 #include "error.hpp"
 #include "option.hpp"
@@ -757,5 +757,5 @@ void get_socket_option(socket & s, Option & opt) {
 
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
-#endif // AZIOMQ_IO_SOCKET_HPP_
+#endif // AZMQ_SOCKET_HPP_
 

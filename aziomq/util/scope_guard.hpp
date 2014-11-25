@@ -9,8 +9,8 @@
     This is an implementation of Andrei Alexandrescu's ScopeGuard type from
     the "Systematic Error Handling in C++" talk given at C++ And Beyond 2012
 */
-#ifndef AZIOMQ_SCOPE_GUARD_HPP_
-#define AZIOMQ_SCOPE_GUARD_HPP_
+#ifndef AZMQ_SCOPE_GUARD_HPP_
+#define AZMQ_SCOPE_GUARD_HPP_
 
 #include <utility>
 
@@ -63,4 +63,4 @@ scope_guard_t<F> operator+(scope_guard_on_exit, F && func) {
 
 #define SCOPE_EXIT\
     auto ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) = aziomq::util::scope_guard_on_exit() + [&]()
-#endif // AZIOMQ_SCOPE_GUARD_HPP_
+#endif // AZMQ_SCOPE_GUARD_HPP_
