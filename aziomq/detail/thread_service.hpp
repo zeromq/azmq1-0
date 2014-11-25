@@ -16,8 +16,10 @@
 #include <boost/assert.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/signal_set.hpp>
+#include <boost/container/flat_map.hpp>
 
 #include <string>
+#include <vector>
 #include <memory>
 #include <thread>
 #include <mutex>
@@ -28,8 +30,9 @@ namespace aziomq {
 namespace detail {
     struct thread_service : boost::asio::io_service::service {
         static boost::asio::io_service::id id;
+        using group_error_info = boost::error_info<struct tag_group_error_info, std::string>;
 
-        static std::string get_uri();
+        static std::string get_uri(const char* pfx);
 
         thread_service(boost::asio::io_service & ios)
             : boost::asio::io_service::service(ios)
@@ -44,14 +47,19 @@ namespace detail {
 
         template<typename T>
         socket make_pipe(bool defer_start, T&& data) {
+            return make_pipe(get_io_service(), defer_start, std::forward<T>(data));
+        }
+
+        template<typename T>
+        static socket make_pipe(boost::asio::io_service & ios, bool defer_start, T&& data) {
             auto p = std::make_shared<model<T>>(std::forward<T>(data));
-            auto res = p->peer_socket(get_io_service());
+            auto res = p->peer_socket(ios);
             res.associate_ext(handler(std::move(p), defer_start));
             return std::move(res);
         }
 
     private:
-        struct concept : std::enable_shared_from_this<concept> {
+        struct concept {
             using ptr = std::shared_ptr<concept>;
 
             boost::asio::io_service io_service_;
@@ -72,7 +80,7 @@ namespace detail {
                 , ready_(false)
                 , stopped_(true)
             {
-                socket_.bind(get_uri());
+                socket_.bind(get_uri("pipe"));
             }
 
             virtual ~concept() = default;

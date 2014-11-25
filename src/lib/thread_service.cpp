@@ -20,10 +20,10 @@ void thread_service::shutdown_service() {
     // TODO Implement
 }
 
-std::string thread_service::get_uri() {
+std::string thread_service::get_uri(const char* pfx) {
     static std::atomic_ulong id{ 0 };
     std::ostringstream stm;
-    stm << "inproc://aziomq-pipe-" << id++;
+    stm << "inproc://aziomq-" << pfx << "-" << id++;
     return stm.str();
 }
 
