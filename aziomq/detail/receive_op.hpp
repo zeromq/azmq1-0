@@ -17,6 +17,7 @@
 #include <boost/asio/io_service.hpp>
 
 #include <zmq.h>
+
 #include <iterator>
 
 namespace aziomq {
@@ -30,8 +31,8 @@ public:
         : reactor_op(select_func(buffers, flags), complete_func)
         , buffers_(buffers)
         , flags_(flags)
-        , it_(std::begin(buffers))
-        , end_(std::end(buffers))
+        , it_(std::begin(buffers_))
+        , end_(std::end(buffers_))
         { }
 
     static bool do_perform_receive_more(reactor_op* base, socket_type & socket) {
@@ -52,8 +53,10 @@ public:
         auto bt = socket_ops::receive(o->msg_, socket, o->flags_ | ZMQ_DONTWAIT, o->ec_);
         if (o->ec_)
             return !o->try_again();
+
+        o->msg_.buffer_copy(*(o->it_++));
         o->bytes_transferred_ += bt;
-        return ++o->it_ == o->end_;
+        return o->it_ == o->end_;
     }
 
 protected:
@@ -73,7 +76,7 @@ private:
 
     using const_iterator = typename MutableBufferSequence::const_iterator;
 
-    MutableBufferSequence const& buffers_;
+    MutableBufferSequence buffers_;
     flags_type flags_;
     const_iterator it_;
     const_iterator end_;
