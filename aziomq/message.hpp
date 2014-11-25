@@ -30,7 +30,7 @@ namespace detail {
     struct socket_ops;
 }
 
-ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
     struct message {
         using flags_type = int;
 
@@ -103,6 +103,12 @@ ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
 
             auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
             return boost::asio::buffer(pv, size());
+        }
+
+        template<typename T>
+        T const& buffer_cast() const {
+            auto buf = boost::asio::buffer(*this);
+            return *boost::asio::buffer_cast<T const*>(buf);
         }
 
         size_t buffer_copy(boost::asio::mutable_buffer const& target) const {
@@ -278,6 +284,6 @@ ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
     message_vector to_message_vector(BufferSequence const& buffers) {
         return message_vector(std::begin(buffers), std::end(buffers));
     }
-ASIOMQ_V1_INLINE_NAMESPACE_END
+AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
 #endif // AZIOMQ_MESSAGE_HPP__

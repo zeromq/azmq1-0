@@ -24,6 +24,7 @@
 #include <type_traits>
 
 namespace aziomq {
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
 /** \brief Implement an asio-like socket over a zeromq socket
  *  \remark sockets are movable, but not copyable
@@ -754,6 +755,7 @@ void get_socket_option(socket & s, Option & opt) {
         throw boost::system::system_error(ec);
 }
 
+AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
 #endif // AZIOMQ_IO_SOCKET_HPP_
 

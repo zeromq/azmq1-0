@@ -16,8 +16,9 @@
 
 #include <functional>
 
-namespace aziomq {
-namespace thread {
+namespace aziomq { namespace thread {
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
+
     using is_alive = detail::thread_service::is_alive;
     using detached = detail::thread_service::detached;
     using start = detail::thread_service::start;
@@ -78,6 +79,7 @@ namespace thread {
                                             std::placeholders::_1,
                                             std::forward<Args>(args)...));
     }
+AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace thread
 } // namespace aziomq
 #endif // AZIOMQ_THREAD_HPP_

@@ -13,16 +13,16 @@
 #include <string>
 
 #if !defined BOOST_NO_CXX11_INLINE_NAMESPACES
-    #define ASIOMQ_V1_INLINE_NAMESPACE_BEGIN inline namespace v1 {
-    #define ASIOMQ_V1_INLINE_NAMESPACE_END }
+    #define AZMQ_V1_INLINE_NAMESPACE_BEGIN inline namespace v1 {
+    #define AZMQ_V1_INLINE_NAMESPACE_END }
 #else
-    #define ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
-    #define ASIOMQ_V1_INLINE_NAMESPACE_END
+    #define AZMQ_V1_INLINE_NAMESPACE_BEGIN
+    #define AZMQ_V1_INLINE_NAMESPACE_END
 #endif
 
 
 namespace aziomq {
-ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
     /** \brief custom error_category to map zeromq errors */
     class error_category : public boost::system::error_category {
     public:
@@ -31,7 +31,7 @@ ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
     };
 
     boost::system::error_code make_error_code(int ev = errno);
-ASIOMQ_V1_INLINE_NAMESPACE_END
+AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace aziomq
 #endif // AZIOMQ_ERROR_HPP_
 

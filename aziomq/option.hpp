@@ -9,6 +9,8 @@
 #ifndef AZIOMQ_OPTION_HPP_
 #define AZIOMQ_OPTION_HPP_
 
+#include "error.hpp"
+
 #include <zmq.h>
 #include <boost/asio/buffer.hpp>
 #include <boost/logic/tribool.hpp>
@@ -18,6 +20,7 @@
 #include <exception>
 
 namespace aziomq { namespace opt {
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
     // limits for user/aziomq-defined options (should be well outside of the valid ZMQ range)
     enum class limits : int {
         lib_min = 1000000,
@@ -113,6 +116,7 @@ namespace aziomq { namespace opt {
 
         std::exception_ptr value() const { return p_; }
     };
+AZMQ_V1_INLINE_NAMESPACE_END
 } }
 
 #endif // AZIOMQ_OPTION_HPP_
