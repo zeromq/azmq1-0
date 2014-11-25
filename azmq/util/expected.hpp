@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <cassert>
 
-namespace aziomq { namespace util {
+namespace azmq { namespace util {
 // define AZMQ_LOG_UNCHECKED *BEFORE* including expected.hpp to forward declare the following
 // function to be called any time an exception is present and unchecked in an expected<T>
 // when it's destructor is called
@@ -139,5 +139,5 @@ public:
     }
 };
 } // namespace util
-} // namespace aziomq
+} // namespace azmq
 #endif // AZMQ_EXPECTED_HPP_

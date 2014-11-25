@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <aziomq/thread.hpp>
-#include <aziomq/util/scope_guard.hpp>
+#include <azmq/thread.hpp>
+#include <azmq/util/scope_guard.hpp>
 
 #define BOOST_ENABLE_ASSERT_HANDLER
 #include <boost/assert.hpp>
@@ -29,7 +29,6 @@ std::string subj(const char* name) {
 }
 
 void test_send_receive_async_threads() {
-
     boost::system::error_code ecc;
     size_t btc = 0;
 
@@ -45,7 +44,7 @@ void test_send_receive_async_threads() {
         }};
 
         boost::asio::io_service ios;
-        auto s = aziomq::thread::fork(ios, [&](aziomq::socket & ss) {
+        auto s = azmq::thread::fork(ios, [&](azmq::socket & ss) {
             ss.async_receive(rcv_bufs, [&](boost::system::error_code const& ec, size_t bytes_transferred) {
                 ecb = ec;
                 btb = bytes_transferred;

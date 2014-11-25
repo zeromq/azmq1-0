@@ -1,5 +1,5 @@
-#include <aziomq/detail/context_ops.hpp>
-#include <aziomq/detail/socket_ops.hpp>
+#include <azmq/detail/context_ops.hpp>
+#include <azmq/detail/socket_ops.hpp>
 
 #define BOOST_ENABLE_ASSERT_HANDLER
 #include <boost/assert.hpp>
@@ -10,7 +10,7 @@
 
 #include "../assert.ipp"
 
-auto ctx = aziomq::detail::context_ops::get_context();
+auto ctx = azmq::detail::context_ops::get_context();
 
 std::array<boost::asio::const_buffer, 2> snd_bufs = {{
     boost::asio::buffer("A"),
@@ -23,51 +23,51 @@ std::string subj(const char* name) {
 
 void test_send_receive_inproc_discrete_calls() {
     boost::system::error_code ec;
-    auto sb = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
+    auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
-    auto sc = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
+    auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
     // Send and receive one at a time
-    aziomq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
+    azmq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
     BOOST_ASSERT(!ec);
 
-    aziomq::message msg;
+    azmq::message msg;
     // Identity comes first
-    aziomq::detail::socket_ops::receive(msg, sb, 0, ec);
+    azmq::detail::socket_ops::receive(msg, sb, 0, ec);
     BOOST_ASSERT(!ec);
     BOOST_ASSERT(msg.more());
 
     // Then first part
-    aziomq::detail::socket_ops::receive(msg, sb, 0, ec);
+    azmq::detail::socket_ops::receive(msg, sb, 0, ec);
     BOOST_ASSERT(!ec);
     BOOST_ASSERT(msg.more());
 
     // Finally second part
-    aziomq::detail::socket_ops::receive(msg, sb, 0, ec);
+    azmq::detail::socket_ops::receive(msg, sb, 0, ec);
     BOOST_ASSERT(!ec);
     BOOST_ASSERT(!msg.more());
 }
 
 void test_send_receive_inproc_mutable_bufseq() {
     boost::system::error_code ec;
-    auto sb = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
+    auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
-    auto sc = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
+    auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
     // Send and receive all message parts as a mutable buffer sequence
-    aziomq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
+    azmq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
     BOOST_ASSERT(!ec);
 
     std::array<char, 5> ident;
@@ -79,7 +79,7 @@ void test_send_receive_inproc_mutable_bufseq() {
         boost::asio::buffer(part_A),
         boost::asio::buffer(part_B)
     }};
-    aziomq::detail::socket_ops::receive(rcv_msg_seq, sb, 0, ec);
+    azmq::detail::socket_ops::receive(rcv_msg_seq, sb, 0, ec);
     BOOST_ASSERT(!ec);
     BOOST_ASSERT('A' == part_A[0]);
     BOOST_ASSERT('B' == part_B[0]);
@@ -87,39 +87,39 @@ void test_send_receive_inproc_mutable_bufseq() {
 
 void test_send_receive_inproc_msg_vect() {
     boost::system::error_code ec;
-    auto sb = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
+    auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
-    auto sc = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
+    auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
     // Send and receive all message parts as a vector
-    aziomq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
+    azmq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
     BOOST_ASSERT(!ec);
 
-    aziomq::message_vector rcv_msgs;
-    aziomq::detail::socket_ops::receive_more(rcv_msgs, sb, 0, ec);
+    azmq::message_vector rcv_msgs;
+    azmq::detail::socket_ops::receive_more(rcv_msgs, sb, 0, ec);
     BOOST_ASSERT(!ec);
     BOOST_ASSERT(rcv_msgs.size() == 3);
 }
 
 void test_send_receive_inproc_not_enough_bufs() {
     boost::system::error_code ec;
-    auto sb = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
+    auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
 
-    auto sc = aziomq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
+    auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     BOOST_ASSERT(!ec);
-    aziomq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
     BOOST_ASSERT(!ec);
     // Verify that we get an error on multipart with too few bufs in seq
-    aziomq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
+    azmq::detail::socket_ops::send(snd_bufs, sc, ZMQ_SNDMORE, ec);
     BOOST_ASSERT(!ec);
 
     std::array<char, 5> ident;
@@ -129,7 +129,7 @@ void test_send_receive_inproc_not_enough_bufs() {
         boost::asio::buffer(ident),
         boost::asio::buffer(part_A)
     }};
-    aziomq::detail::socket_ops::receive(rcv_msg_seq_2, sb, ZMQ_RCVMORE, ec);
+    azmq::detail::socket_ops::receive(rcv_msg_seq_2, sb, ZMQ_RCVMORE, ec);
     BOOST_ASSERT(ec);
 }
 

@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,9 +19,9 @@
 #include <string>
 #include <exception>
 
-namespace aziomq { namespace opt {
+namespace azmq { namespace opt {
 AZMQ_V1_INLINE_NAMESPACE_BEGIN
-    // limits for user/aziomq-defined options (should be well outside of the valid ZMQ range)
+    // limits for user/azmq-defined options (should be well outside of the valid ZMQ range)
     enum class limits : int {
         lib_min = 1000000,
         lib_ctx_min = lib_min,

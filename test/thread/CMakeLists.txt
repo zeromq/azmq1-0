@@ -2,4 +2,4 @@
 add_executable(test_thread main.cpp)
 target_link_libraries(test_thread ${Boost_LIBRARIES}
                                   ${ZeroMQ_LIBRARIES}
-                                  aziomq)
+                                  azmq)

@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -23,7 +23,7 @@
 
 #include <type_traits>
 
-namespace aziomq {
+namespace azmq {
 AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
 /** \brief Implement an asio-like socket over a zeromq socket
@@ -756,6 +756,6 @@ void get_socket_option(socket & s, Option & opt) {
 }
 
 AZMQ_V1_INLINE_NAMESPACE_END
-} // namespace aziomq
+} // namespace azmq
 #endif // AZMQ_SOCKET_HPP_
 

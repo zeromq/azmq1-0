@@ -1,12 +1,12 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <aziomq/detail/context_ops.hpp>
+#include <azmq/detail/context_ops.hpp>
 
 #define BOOST_ENABLE_ASSERT_HANDLER
 #include <boost/assert.hpp>
@@ -19,23 +19,23 @@
 #include "../assert.ipp"
 
 void test_context() {
-    auto ctx = aziomq::detail::context_ops::get_context();
-    auto ctx2 = aziomq::detail::context_ops::get_context(true);
+    auto ctx = azmq::detail::context_ops::get_context();
+    auto ctx2 = azmq::detail::context_ops::get_context(true);
     BOOST_ASSERT_MSG(ctx != ctx2, "expecting ctx != ctx2");
 
-    auto ctx3 = aziomq::detail::context_ops::get_context();
+    auto ctx3 = azmq::detail::context_ops::get_context();
     BOOST_ASSERT_MSG(ctx == ctx3, "expecting ctx == ctx3");
 }
 
 void test_context_options() {
-    auto ctx = aziomq::detail::context_ops::get_context();
-    using io_threads = aziomq::detail::context_ops::io_threads;
+    auto ctx = azmq::detail::context_ops::get_context();
+    using io_threads = azmq::detail::context_ops::io_threads;
     boost::system::error_code ec;
-    aziomq::detail::context_ops::set_option(ctx, io_threads(2), ec);
+    azmq::detail::context_ops::set_option(ctx, io_threads(2), ec);
     BOOST_ASSERT_MSG(!ec, "error setting io_threads option");
 
     io_threads res;
-    aziomq::detail::context_ops::get_option(ctx, res, ec);
+    azmq::detail::context_ops::get_option(ctx, res, ec);
     BOOST_ASSERT_MSG(!ec, "error getting io_threads option");
     BOOST_ASSERT(res.value() == 2);
 }

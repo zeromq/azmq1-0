@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -25,7 +25,7 @@
 #include <ostream>
 #include <cstring>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct socket_ops;
 }
@@ -285,5 +285,5 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
         return message_vector(std::begin(buffers), std::end(buffers));
     }
 AZMQ_V1_INLINE_NAMESPACE_END
-} // namespace aziomq
+} // namespace azmq
 #endif // AZMQ_MESSAGE_HPP__

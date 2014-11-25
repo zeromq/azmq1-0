@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,7 +14,7 @@
 
 #include <utility>
 
-namespace aziomq {
+namespace azmq {
 namespace util {
 template<class F>
 class scope_guard_t {
@@ -49,7 +49,7 @@ scope_guard_t<F> operator+(scope_guard_on_exit, F && func) {
     return scope_guard<F>(std::forward<F>(func));
 }
 } // namespace util
-} // namespace aziomq
+} // namespace azmq
 
 #define CONCATENATE_IMPL(s1, s2) s1##s2
 #define CONCATENATE(s1, s2) CONCATENATE_IMPL(s1, s2)
@@ -62,5 +62,5 @@ scope_guard_t<F> operator+(scope_guard_on_exit, F && func) {
 #endif // __COUNTER__
 
 #define SCOPE_EXIT\
-    auto ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) = aziomq::util::scope_guard_on_exit() + [&]()
+    auto ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) = azmq::util::scope_guard_on_exit() + [&]()
 #endif // AZMQ_SCOPE_GUARD_HPP_

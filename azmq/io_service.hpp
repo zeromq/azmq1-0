@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,7 +16,7 @@
 #include <boost/asio/io_service.hpp>
 #include <zmq.h>
 
-namespace aziomq {
+namespace azmq {
 namespace io_service {
     using  service_type = detail::socket_service;
 
@@ -73,5 +73,5 @@ namespace io_service {
             throw boost::system::system_error(ec);
     }
 } // namespace io_service
-} // namespace aziomq
+} // namespace azmq
 #endif // AZMQ_IO_SERVICE_HPP_

@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,7 @@
 
 #include <memory>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct context_ops {
         using context_type = std::shared_ptr<void>;
@@ -52,7 +52,7 @@ namespace detail {
         }
     };
 } // namespace detail
-} // namespace aziomq
+} // namespace azmq
 
 #endif // AZMQ_DETAIL_CONTEXT_OPS_HPP__
 
