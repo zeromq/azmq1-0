@@ -317,25 +317,29 @@ struct monitor_handler {
     azmq::socket socket_;
     std::string role_;
     event_t event_;
-    std::vector<uint16_t> events_;
+    std::vector<event_t> events_;
 
     monitor_handler(boost::asio::io_service & ios, azmq::socket& s, std::string role)
         : socket_(s.monitor(ios, ZMQ_EVENT_ALL))
         , role_(std::move(role))
     { }
 
-    static void async_receive(ptr p) {
-        p->socket_.async_receive(boost::asio::buffer(&p->event_, sizeof(event_t)),
-            [p](boost::system::error_code const& ec, size_t) {
+    void start()
+    {
+        socket_.async_receive(boost::asio::buffer(&event_, sizeof(event_t)),
+            [this](boost::system::error_code const& ec, size_t) {
                 if (ec)
                     return;
-                BOOST_ASSERT_MSG(p->event_.e != 0, "!event_.e");
-                BOOST_ASSERT_MSG(p->event_.i != 0, "!event_.i");
                 azmq::message msg;
-                p->socket_.receive(msg, ZMQ_RCVMORE);
-                p->events_.push_back(p->event_.e);
-                async_receive(p);
+                socket_.receive(msg, ZMQ_RCVMORE);
+                events_.push_back(event_);
+                start();
             });
+    }
+
+    void cancel()
+    {
+        socket_.cancel();
     }
 };
 
@@ -367,12 +371,13 @@ void test_socket_monitor() {
     socket_ptr client(new azmq::socket(ios, ZMQ_DEALER));
     socket_ptr server(new azmq::socket(ios, ZMQ_DEALER));
 
-    auto client_monitor = std::make_shared<monitor_handler>(ios_m, *client, "client");
-    auto server_monitor = std::make_shared<monitor_handler>(ios_m, *server, "server");
+    monitor_handler client_monitor(ios_m, *client, "client");
+    monitor_handler server_monitor(ios_m, *server, "server");
+
+    client_monitor.start();
+    server_monitor.start();
 
     std::thread t([&] {
-        monitor_handler::async_receive(server_monitor);
-        monitor_handler::async_receive(client_monitor);
         ios_m.run();
     });
 
@@ -383,8 +388,13 @@ void test_socket_monitor() {
 
     ios_m.stop();
     t.join();
-    BOOST_ASSERT_MSG(!client_monitor->events_.empty(), "!client_monitor events");
-    BOOST_ASSERT_MSG(!server_monitor->events_.empty(), "!server_monitor events");
+
+    BOOST_ASSERT_MSG(client_monitor.events_.size() == 2, "wrong count of client_monitor events");
+    BOOST_ASSERT_MSG(server_monitor.events_.size() == 2, "wrong count of server_monitor events");
+    BOOST_ASSERT_MSG(client_monitor.events_.at(0).e == ZMQ_EVENT_CONNECT_DELAYED, "wrong client_monitor events[0]");
+    BOOST_ASSERT_MSG(client_monitor.events_.at(1).e == ZMQ_EVENT_CONNECTED, "wrong client_monitor events[1]");
+    BOOST_ASSERT_MSG(server_monitor.events_.at(0).e == ZMQ_EVENT_LISTENING, "wrong server_monitor events[0]");
+    BOOST_ASSERT_MSG(server_monitor.events_.at(1).e == ZMQ_EVENT_ACCEPTED, "wrong server_monitor events[1]");
 }
 
 int main(int argc, char **argv) {
