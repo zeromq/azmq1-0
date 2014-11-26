@@ -306,9 +306,9 @@ namespace detail {
                                        socket_ops::endpoint_type endpoint,
                                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (socket_ops::bind(impl->socket_, std::move(endpoint), ec))
+            if (socket_ops::bind(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_ = endpoint;
+            impl->endpoint_ = std::move(endpoint);
             return ec;
         }
 
@@ -316,9 +316,9 @@ namespace detail {
                                           socket_ops::endpoint_type endpoint,
                                           boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (socket_ops::connect(impl->socket_, std::move(endpoint), ec))
+            if (socket_ops::connect(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_ = endpoint;
+            impl->endpoint_ = std::move(endpoint);
             return ec;
         }
 
