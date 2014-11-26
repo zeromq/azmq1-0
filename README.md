@@ -1,9 +1,11 @@
-# aziomq
+# azmq Boost Asio + ZeroMQ
 
 ## Welcome
-The aziomq library provides Boost Asio style bindings for ZeroMQ
+The azmq library provides Boost Asio style bindings for ZeroMQ
 
-This library is built on top of ZeroMQ's standard C interface.
+This library is built on top of ZeroMQ's standard C interface and is
+intended to work well with C++ applications which use the Boost libraries
+in general, and Asio in particular.
 
 The main abstraction exposed by the library is aziomq::socket which
 provides an Asio style socket interface to the underlying zeromq socket
