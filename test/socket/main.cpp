@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <aziomq/socket.hpp>
-#include <aziomq/util/scope_guard.hpp>
+#include <azmq/socket.hpp>
+#include <azmq/util/scope_guard.hpp>
 
 #define BOOST_ENABLE_ASSERT_HANDLER
 #include <boost/assert.hpp>
@@ -34,13 +34,13 @@ std::string subj(const char* name) {
 void test_set_get_options() {
     boost::asio::io_service ios;
 
-    aziomq::socket s(ios, ZMQ_ROUTER);
+    azmq::socket s(ios, ZMQ_ROUTER);
 
     // set/get_option are generic, works for one and all...
-    aziomq::socket::rcv_hwm in_hwm(42);
+    azmq::socket::rcv_hwm in_hwm(42);
     s.set_option(in_hwm);
 
-    aziomq::socket::rcv_hwm out_hwm;
+    azmq::socket::rcv_hwm out_hwm;
     s.get_option(out_hwm);
     BOOST_ASSERT_MSG(in_hwm.value() == out_hwm.value(), "in_hwm != out_hwm");
 }
@@ -48,15 +48,15 @@ void test_set_get_options() {
 void test_send_receive_sync() {
     boost::asio::io_service ios;
 
-    aziomq::socket sb(ios, ZMQ_ROUTER);
+    azmq::socket sb(ios, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
-    aziomq::socket sc(ios, ZMQ_DEALER);
+    azmq::socket sc(ios, ZMQ_DEALER);
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     sc.send(snd_bufs, ZMQ_SNDMORE);
 
-    aziomq::message msg;
+    azmq::message msg;
     auto size = sb.receive(msg);
 
     BOOST_ASSERT_MSG(msg.more(), "more");
@@ -89,12 +89,12 @@ void test_send_receive_async(bool is_speculative) {
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
 
-    aziomq::socket sb(ios_b, ZMQ_ROUTER);
-    sb.set_option(aziomq::socket::allow_speculative(is_speculative));
+    azmq::socket sb(ios_b, ZMQ_ROUTER);
+    sb.set_option(azmq::socket::allow_speculative(is_speculative));
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
-    aziomq::socket sc(ios_c, ZMQ_DEALER);
-    sc.set_option(aziomq::socket::allow_speculative(is_speculative));
+    azmq::socket sc(ios_c, ZMQ_DEALER);
+    sc.set_option(azmq::socket::allow_speculative(is_speculative));
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
@@ -134,11 +134,11 @@ void test_send_receive_async(bool is_speculative) {
 
 void test_send_receive_async_threads(bool optimize_single_threaded) {
     boost::asio::io_service ios_b;
-    aziomq::socket sb(ios_b, ZMQ_ROUTER, optimize_single_threaded);
+    azmq::socket sb(ios_b, ZMQ_ROUTER, optimize_single_threaded);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
     boost::asio::io_service ios_c;
-    aziomq::socket sc(ios_c, ZMQ_DEALER, optimize_single_threaded);
+    azmq::socket sc(ios_c, ZMQ_DEALER, optimize_single_threaded);
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
@@ -185,10 +185,10 @@ void test_send_receive_message_async() {
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
 
-    aziomq::socket sb(ios_b, ZMQ_ROUTER);
+    azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
-    aziomq::socket sc(ios_c, ZMQ_DEALER);
+    azmq::socket sc(ios_c, ZMQ_DEALER);
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
@@ -205,7 +205,7 @@ void test_send_receive_message_async() {
 
     boost::system::error_code ecb;
     size_t btb = 0;
-    sb.async_receive([&](boost::system::error_code const& ec, aziomq::message & msg, size_t bytes_transferred) {
+    sb.async_receive([&](boost::system::error_code const& ec, azmq::message & msg, size_t bytes_transferred) {
         SCOPE_EXIT { ios_b.stop(); };
         ecb = ec;
         if (ecb)
@@ -241,10 +241,10 @@ void test_send_receive_message_more_async() {
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
 
-    aziomq::socket sb(ios_b, ZMQ_ROUTER);
+    azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
-    aziomq::socket sc(ios_c, ZMQ_DEALER);
+    azmq::socket sc(ios_c, ZMQ_DEALER);
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     boost::system::error_code ecc;
@@ -266,7 +266,7 @@ void test_send_receive_message_more_async() {
 
     boost::system::error_code ecb;
     size_t btb = 0;
-    sb.async_receive([&](boost::system::error_code const& ec, aziomq::message & msg, size_t bytes_transferred) {
+    sb.async_receive([&](boost::system::error_code const& ec, azmq::message & msg, size_t bytes_transferred) {
         SCOPE_EXIT { ios_b.stop(); };
         ecb = ec;
         if (ecb)
@@ -277,7 +277,7 @@ void test_send_receive_message_more_async() {
         if (!msg.more())
             return;
 
-        aziomq::message_vector v;
+        azmq::message_vector v;
         btb += sb.receive_more(v, 0, ecb);
         if (ecb)
             return;
@@ -314,12 +314,12 @@ struct monitor_handler {
     } __attribute__((packed));
 #endif
 
-    aziomq::socket socket_;
+    azmq::socket socket_;
     std::string role_;
     event_t event_;
     std::vector<uint16_t> events_;
 
-    monitor_handler(boost::asio::io_service & ios, aziomq::socket& s, std::string role)
+    monitor_handler(boost::asio::io_service & ios, azmq::socket& s, std::string role)
         : socket_(s.monitor(ios, ZMQ_EVENT_ALL))
         , role_(std::move(role))
     { }
@@ -331,7 +331,7 @@ struct monitor_handler {
                     return;
                 BOOST_ASSERT_MSG(p->event_.e != 0, "!event_.e");
                 BOOST_ASSERT_MSG(p->event_.i != 0, "!event_.i");
-                aziomq::message msg;
+                azmq::message msg;
                 p->socket_.receive(msg, ZMQ_RCVMORE);
                 p->events_.push_back(p->event_.e);
                 async_receive(p);
@@ -339,7 +339,7 @@ struct monitor_handler {
     }
 };
 
-void bounce(aziomq::socket & server, aziomq::socket & client) {
+void bounce(azmq::socket & server, azmq::socket & client) {
     const char *content = "12345678ABCDEFGH12345678abcdefgh";
     std::array<boost::asio::const_buffer, 2> snd_bufs = {{
         boost::asio::buffer(content, 32),
@@ -363,9 +363,9 @@ void test_socket_monitor() {
     boost::asio::io_service ios;
     boost::asio::io_service ios_m;
 
-    using socket_ptr = std::unique_ptr<aziomq::socket>;
-    socket_ptr client(new aziomq::socket(ios, ZMQ_DEALER));
-    socket_ptr server(new aziomq::socket(ios, ZMQ_DEALER));
+    using socket_ptr = std::unique_ptr<azmq::socket>;
+    socket_ptr client(new azmq::socket(ios, ZMQ_DEALER));
+    socket_ptr server(new azmq::socket(ios, ZMQ_DEALER));
 
     auto client_monitor = std::make_shared<monitor_handler>(ios_m, *client, "client");
     auto server_monitor = std::make_shared<monitor_handler>(ios_m, *server, "server");

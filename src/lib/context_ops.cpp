@@ -1,12 +1,12 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <aziomq/detail/context_ops.hpp>
+#include <azmq/detail/context_ops.hpp>
 
 #include <zmq.h>
 
@@ -15,7 +15,7 @@
 
 #include <memory>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
 using lock_type = boost::lock_guard<boost::mutex>;
 lock_type::mutex_type mtx;
@@ -36,4 +36,4 @@ context_ops::context_type context_ops::get_context(bool create_new) {
     return p;
 }
 } // namespace detail
-} // namespace aziomq
+} // namespace azmq

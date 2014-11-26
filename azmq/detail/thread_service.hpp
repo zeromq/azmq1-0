@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_THREAD_SERVICE_HPP_
-#define AZIOMQ_THREAD_SERVICE_HPP_
+#ifndef AZMQ_DETAIL_THREAD_SERVICE_HPP_
+#define AZMQ_DETAIL_THREAD_SERVICE_HPP_
 
 #include "../error.hpp"
 #include "../socket.hpp"
@@ -17,16 +17,16 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/container/flat_map.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <string>
 #include <vector>
 #include <memory>
-#include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <exception>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct thread_service : boost::asio::io_service::service {
         static boost::asio::io_service::id id;
@@ -65,7 +65,7 @@ namespace detail {
             boost::asio::io_service io_service_;
             boost::asio::signal_set signals_;
             socket socket_;
-            std::thread thread_;
+            boost::thread thread_;
 
             using lock_type = std::unique_lock<std::mutex>;
             mutable lock_type::mutex_type mutex_;
@@ -144,7 +144,7 @@ namespace detail {
                     p->io_service_.stop();
                 });
                 p->stopped_ = false;
-                p->thread_ = std::thread([p] {
+                p->thread_ = boost::thread([p] {
                     p->ready();
                     try {
                         p->run();
@@ -251,6 +251,6 @@ namespace detail {
         };
     };
 } // namespace detail
-} // namespace aziomq
-#endif // AZIOMQ_THREAD_SERVICE_HPP_
+} // namespace azmq
+#endif // AZMQ_DETAIL_THREAD_SERVICE_HPP_
 

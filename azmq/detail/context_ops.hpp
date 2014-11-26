@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_DETAIL_CONTEXT_OPS_HPP__
-#define AZIOMQ_DETAIL_CONTEXT_OPS_HPP__
+#ifndef AZMQ_DETAIL_CONTEXT_OPS_HPP__
+#define AZMQ_DETAIL_CONTEXT_OPS_HPP__
 
 #include "../error.hpp"
 #include "../option.hpp"
@@ -17,7 +17,7 @@
 
 #include <memory>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct context_ops {
         using context_type = std::shared_ptr<void>;
@@ -52,7 +52,7 @@ namespace detail {
         }
     };
 } // namespace detail
-} // namespace aziomq
+} // namespace azmq
 
-#endif // AZIOMQ_DETAIL_CONTEXT_OPS_HPP__
+#endif // AZMQ_DETAIL_CONTEXT_OPS_HPP__
 

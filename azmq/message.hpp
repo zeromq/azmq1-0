@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_MESSAGE_HPP__
-#define AZIOMQ_MESSAGE_HPP__
+#ifndef AZMQ_MESSAGE_HPP__
+#define AZMQ_MESSAGE_HPP__
 
 #include "error.hpp"
 #include "util/scope_guard.hpp"
@@ -25,12 +25,12 @@
 #include <ostream>
 #include <cstring>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct socket_ops;
 }
 
-ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
     struct message {
         using flags_type = int;
 
@@ -103,6 +103,12 @@ ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
 
             auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
             return boost::asio::buffer(pv, size());
+        }
+
+        template<typename T>
+        T const& buffer_cast() const {
+            auto buf = boost::asio::buffer(*this);
+            return *boost::asio::buffer_cast<T const*>(buf);
         }
 
         size_t buffer_copy(boost::asio::mutable_buffer const& target) const {
@@ -278,6 +284,6 @@ ASIOMQ_V1_INLINE_NAMESPACE_BEGIN
     message_vector to_message_vector(BufferSequence const& buffers) {
         return message_vector(std::begin(buffers), std::end(buffers));
     }
-ASIOMQ_V1_INLINE_NAMESPACE_END
-} // namespace aziomq
-#endif // AZIOMQ_MESSAGE_HPP__
+AZMQ_V1_INLINE_NAMESPACE_END
+} // namespace azmq
+#endif // AZMQ_MESSAGE_HPP__

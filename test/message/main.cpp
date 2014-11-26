@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 #include <iostream>
-#include <aziomq/message.hpp>
+#include <azmq/message.hpp>
 
 #define BOOST_ENABLE_ASSERT_HANDLER
 #include <boost/assert.hpp>
@@ -22,26 +22,26 @@
 
 void test_message_constructors() {
     // default init range has 0 size
-    aziomq::message m;
+    azmq::message m;
     BOOST_ASSERT(m.size() == 0);
 
     // pre-sized message construction
-    aziomq::message mm(42);
+    azmq::message mm(42);
     BOOST_ASSERT(mm.size() == 42);
 
     // implicit construction from asio::const_buffer
     std::string s("This is a test");
-    aziomq::message mstr(boost::asio::buffer(s));
+    azmq::message mstr(boost::asio::buffer(s));
     BOOST_ASSERT(s.size() == mstr.size());
     BOOST_ASSERT(s ==  mstr.string());
 
     // construction from string
-    aziomq::message mmstr(s);
+    azmq::message mmstr(s);
     BOOST_ASSERT(s == mmstr.string());
 }
 
 void test_message_buffer_operations() {
-    aziomq::message mm(42);
+    azmq::message mm(42);
     // implicit cast to const_buffer
     boost::asio::const_buffer b = mm;
     BOOST_ASSERT(boost::asio::buffer_size(b) == mm.size());
@@ -52,17 +52,17 @@ void test_message_buffer_operations() {
 }
 
 void test_message_copy_operations() {
-    aziomq::message m(42);
-    aziomq::message mm(m);
+    azmq::message m(42);
+    azmq::message mm(m);
     BOOST_ASSERT(m.size() == mm.size() && mm.size() == 42);
 
-    aziomq::message mmm = m;
+    azmq::message mmm = m;
     BOOST_ASSERT(m.size() == mmm.size() && mmm.size() == 42);
 }
 
 void test_message_move_operations() {
-    aziomq::message m;
-    aziomq::message mm(42);
+    azmq::message m;
+    azmq::message mm(42);
 
     // move assignment
     m = std::move(mm);
@@ -70,15 +70,15 @@ void test_message_move_operations() {
     BOOST_ASSERT(mm.size() == 0);
 
     // move construction
-    aziomq::message mmm(std::move(m));
+    azmq::message mmm(std::move(m));
     BOOST_ASSERT(m.size() == 0);
     BOOST_ASSERT(mmm.size() == 42);
 }
 
 void test_write_through_mutable_buffer() {
-    aziomq::message m("This is a test");
+    azmq::message m("This is a test");
 
-    aziomq::message mm(m);
+    azmq::message mm(m);
     boost::asio::mutable_buffer bb = mm;
     auto pstr = boost::asio::buffer_cast<char*>(bb);
     pstr[0] = 't';
@@ -100,7 +100,7 @@ void test_message_sequence() {
     }};
 
     // make a message_vector from a range
-    auto res = aziomq::to_message_vector(bufs);
+    auto res = azmq::to_message_vector(bufs);
     BOOST_ASSERT(res.size() == bufs.size());
     BOOST_ASSERT(foo == res[0].string());
     BOOST_ASSERT(bar == res[1].string());
@@ -110,13 +110,13 @@ void test_message_sequence() {
     BOOST_ASSERT(res.size() == bufs.size() + 1);
 
     // range of const_buffer -> range of message
-    auto range = aziomq::const_message_range(bufs);
+    auto range = azmq::const_message_range(bufs);
     BOOST_ASSERT(std::distance(std::begin(bufs), std::end(bufs)) ==
                  std::distance(std::begin(range), std::end(range)));
 
     auto it = std::begin(range);
     for(auto& buf : bufs) {
-        BOOST_ASSERT(aziomq::message(buf) == *it++);
+        BOOST_ASSERT(azmq::message(buf) == *it++);
     }
 }
 

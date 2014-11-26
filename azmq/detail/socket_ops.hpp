@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_DETAIL_SOCKET_OPS_HPP__
-#define AZIOMQ_DETAIL_SOCKET_OPS_HPP__
+#ifndef AZMQ_DETAIL_SOCKET_OPS_HPP__
+#define AZMQ_DETAIL_SOCKET_OPS_HPP__
 
 #include "../error.hpp"
 #include "../message.hpp"
@@ -31,7 +31,7 @@
 #include <sstream>
 #include <type_traits>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct socket_ops {
         using endpoint_type = std::string;
@@ -264,6 +264,6 @@ namespace detail {
         }
     };
 } // namespace detail
-} // namespace aziomq
-#endif // AZIOMQ_DETAIL_SOCKET_OPS_HPP__
+} // namespace azmq
+#endif // AZMQ_DETAIL_SOCKET_OPS_HPP__
 

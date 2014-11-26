@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_DETAIL_SOCKET_SERVICE_HPP__
-#define AZIOMQ_DETAIL_SOCKET_SERVICE_HPP__
+#ifndef AZMQ_DETAIL_SOCKET_SERVICE_HPP__
+#define AZMQ_DETAIL_SOCKET_SERVICE_HPP__
 #include "../error.hpp"
 #include "../message.hpp"
 #include "../option.hpp"
@@ -35,7 +35,7 @@
 #include <vector>
 #include <tuple>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
     struct socket_service : boost::asio::io_service::service {
         using socket_type = socket_ops::socket_type;
@@ -82,9 +82,9 @@ namespace detail {
             std::array<op_queue_type, max_ops> op_queue_;
 
             ~per_descriptor_data() {
-
 #if ! defined BOOST_ASIO_WINDOWS
-                sd_->release(); // Release file descriptor
+                if (sd_)
+                    sd_->release(); // Release file descriptor
 #else
                 sd_.reset();    // Close duplicated socket
 #endif
@@ -577,6 +577,6 @@ namespace detail {
             }
         };
     } // namespace detail
-    } // namespace aziomq
-#endif // AZIOMQ_DETAIL_SOCKET_SERVICE_HPP__
+    } // namespace azmq
+#endif // AZMQ_DETAIL_SOCKET_SERVICE_HPP__
 

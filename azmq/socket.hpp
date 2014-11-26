@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_IO_SOCKET_HPP_
-#define AZIOMQ_IO_SOCKET_HPP_
+#ifndef AZMQ_SOCKET_HPP_
+#define AZMQ_SOCKET_HPP_
 
 #include "error.hpp"
 #include "option.hpp"
@@ -23,7 +23,8 @@
 
 #include <type_traits>
 
-namespace aziomq {
+namespace azmq {
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
 /** \brief Implement an asio-like socket over a zeromq socket
  *  \remark sockets are movable, but not copyable
@@ -754,6 +755,7 @@ void get_socket_option(socket & s, Option & opt) {
         throw boost::system::system_error(ec);
 }
 
-} // namespace aziomq
-#endif // AZIOMQ_IO_SOCKET_HPP_
+AZMQ_V1_INLINE_NAMESPACE_END
+} // namespace azmq
+#endif // AZMQ_SOCKET_HPP_
 

@@ -1,13 +1,13 @@
 /*
     Copyright (c) 2013-2014 Contributors as noted in the AUTHORS file
 
-    This file is part of aziomq
+    This file is part of azmq
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZIOMQ_SEND_OP_HPP_
-#define AZIOMQ_SEND_OP_HPP_
+#ifndef AZMQ_DETAIL_SEND_OP_HPP_
+#define AZMQ_DETAIL_SEND_OP_HPP_
 #include "../error.hpp"
 #include "../message.hpp"
 #include "socket_ops.hpp"
@@ -18,7 +18,7 @@
 #include <zmq.h>
 #include <iterator>
 
-namespace aziomq {
+namespace azmq {
 namespace detail {
 
 template<typename ConstBufferSequence>
@@ -151,7 +151,7 @@ private:
 };
 
 } // namespace detail
-} // namespace aziomq
-#endif // AZIOMQ_SEND_OP_HPP_
+} // namespace azmq
+#endif // AZMQ_DETAIL_SEND_OP_HPP_
 
 
