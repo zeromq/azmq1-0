@@ -10,6 +10,7 @@
 #define AZMQ_ERROR_HPP_
 
 #include <boost/system/error_code.hpp>
+#include <zmq.h>
 #include <string>
 
 #if !defined BOOST_NO_CXX11_INLINE_NAMESPACES
@@ -26,11 +27,20 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
     /** \brief custom error_category to map zeromq errors */
     class error_category : public boost::system::error_category {
     public:
-        virtual const char* name() const BOOST_SYSTEM_NOEXCEPT;
-        virtual std::string message(int ev) const;
+        const char* name() const BOOST_SYSTEM_NOEXCEPT override {
+            return "ZeroMQ";
+        }
+
+        std::string message(int ev) const override {
+            return std::string(zmq_strerror(ev));
+        }
     };
 
-    boost::system::error_code make_error_code(int ev = errno);
+    inline boost::system::error_code make_error_code(int ev = errno) {
+        static error_category cat;
+
+        return boost::system::error_code(ev, cat);
+    }
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace azmq
 #endif // AZMQ_ERROR_HPP_

@@ -23,7 +23,7 @@ which supports C++11. Currently this has been tested with -
 * Microsoft Visual Studio 2013 on Windows 7
 
 Library dependencies are -
-* Boost 1.53 or later
+* Boost 1.54 or later
 * ZeroMQ 4.0.x
 
 To build on Linux / OS X -
