@@ -37,7 +37,6 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR})
 
 enable_testing()
-add_subdirectory(src)
 add_subdirectory(test)
 #add_subdirectory(doc/examples)
 

@@ -12,9 +12,9 @@
 #include "../error.hpp"
 #include "../socket.hpp"
 #include "../option.hpp"
+#include "service_base.hpp"
 
 #include <boost/assert.hpp>
-#include <boost/asio/io_service.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/container/flat_map.hpp>
 #include <boost/thread/thread.hpp>
@@ -24,21 +24,24 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
+#include <sstream>
 #include <exception>
 
 namespace azmq {
 namespace detail {
-    struct thread_service : boost::asio::io_service::service {
-        static boost::asio::io_service::id id;
+    class thread_service
+        : public azmq::detail::service_base<thread_service> {
+    public:
         using group_error_info = boost::error_info<struct tag_group_error_info, std::string>;
 
-        static std::string get_uri(const char* pfx);
+        inline static std::string get_uri(const char* pfx);
 
         thread_service(boost::asio::io_service & ios)
-            : boost::asio::io_service::service(ios)
+            : azmq::detail::service_base<thread_service>(ios)
         { }
 
-        void shutdown_service() override;
+        void shutdown_service() override { }
 
         using is_alive = opt::boolean<static_cast<int>(opt::limits::lib_thread_min)>;
         using detached = opt::boolean<static_cast<int>(opt::limits::lib_thread_min) + 1>;
@@ -250,6 +253,14 @@ namespace detail {
             }
         };
     };
+
+    std::string thread_service::get_uri(const char* pfx) {
+        static std::atomic_ulong id{ 0 };
+        std::ostringstream stm;
+        stm << "inproc://azmq-" << pfx << "-" << id++;
+        return stm.str();
+    }
+
 } // namespace detail
 } // namespace azmq
 #endif // AZMQ_DETAIL_THREAD_SERVICE_HPP_

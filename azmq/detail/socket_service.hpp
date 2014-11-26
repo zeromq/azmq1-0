@@ -12,6 +12,7 @@
 #include "../message.hpp"
 #include "../option.hpp"
 #include "../util/scope_guard.hpp"
+#include "service_base.hpp"
 #include "context_ops.hpp"
 #include "socket_ops.hpp"
 #include "socket_ext.hpp"
@@ -21,10 +22,8 @@
 
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>
-#include <boost/asio/io_service.hpp>
 #include <boost/intrusive/list.hpp>
 #include <boost/system/system_error.hpp>
-#include <boost/range/sub_range.hpp>
 #include <boost/container/flat_map.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
@@ -37,7 +36,9 @@
 
 namespace azmq {
 namespace detail {
-    struct socket_service : boost::asio::io_service::service {
+    class socket_service
+        : public azmq::detail::service_base<socket_service> {
+    public:
         using socket_type = socket_ops::socket_type;
         using native_handle_type= socket_ops::raw_socket_type;
         using stream_descriptor = socket_ops::stream_descriptor;
@@ -53,8 +54,6 @@ namespace detail {
                                     >>;
         using exts_type = boost::container::flat_map<std::type_index, socket_ext>;
         using allow_speculative = opt::boolean<static_cast<int>(opt::limits::lib_socket_min)>;
-
-        static boost::asio::io_service::id id;
 
         enum class shutdown_type {
             none = 0,
@@ -156,11 +155,13 @@ namespace detail {
         using implementation_type = std::shared_ptr<per_descriptor_data>;
 
         explicit socket_service(boost::asio::io_service & ios)
-            : boost::asio::io_service::service(ios)
+            : azmq::detail::service_base<socket_service>(ios)
             , ctx_(context_ops::get_context())
         { }
 
-        void shutdown_service() override;
+        void shutdown_service() override {
+            ctx_.reset();
+        }
 
         context_type context() const { return ctx_; }
 
