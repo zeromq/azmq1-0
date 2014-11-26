@@ -176,6 +176,7 @@ namespace detail {
 
             handler(concept::ptr p, bool defer_start)
                 : p_(std::move(p))
+                , defer_start_(defer_start)
             { }
 
             void on_install(boost::asio::io_service&, void*) {
