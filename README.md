@@ -1,4 +1,4 @@
-# azmq Boost Asio + ZeroMQ
+# AZMQ Boost Asio + ZeroMQ
 
 ## Welcome
 The azmq library provides Boost Asio style bindings for ZeroMQ
@@ -7,7 +7,7 @@ This library is built on top of ZeroMQ's standard C interface and is
 intended to work well with C++ applications which use the Boost libraries
 in general, and Asio in particular.
 
-The main abstraction exposed by the library is aziomq::socket which
+The main abstraction exposed by the library is azmq::socket which
 provides an Asio style socket interface to the underlying zeromq socket
 and interfaces with Asio's io_service().  The socket implementation
 participates in the io_service's reactor for asynchronous IO and
@@ -50,7 +50,7 @@ This is an aziomq version of the code presented in the ZeroMQ guide at
 http://zeromq.org/intro:read-the-manual
 
 ```
-#include <aziomq/socket.hpp>
+#include <azmq/socket.hpp>
 #include <boost/asio.hpp>
 #include <array>
 
@@ -58,12 +58,12 @@ namespace asio = boost::asio;
 
 int main(int argc, char** argv) {
     asio::io_service ios;
-    aziomq::socket subscriber(ios, ZMQ_SUB);
+    azmq::socket subscriber(ios, ZMQ_SUB);
     subscriber.connect("tcp://192.168.55.112:5556");
     subscriber.connect("tcp://192.168.55.201:7721");
     subscriber.set_option(aziomq::socket::subscribe("NASDAQ"));
 
-    aziomq::socket publisher(ios, ZMQ_PUB);
+    azmq::socket publisher(ios, ZMQ_PUB);
     publisher.bind("ipc://nasdaq-feed");
 
     std::array<char, 256> buf;
@@ -85,5 +85,5 @@ included with the distribution.
 
 ## Contributing
 
-AzioMQ uses the [C4.1 (Collective Code Construction Contract)](http://rfc.zeromq.org/spec:22) process for contributions.
+AZMQ uses the [C4.1 (Collective Code Construction Contract)](http://rfc.zeromq.org/spec:22) process for contributions.
 See the accompanying CONTRIBUTING file for more information.
