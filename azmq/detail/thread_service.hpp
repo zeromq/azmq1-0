@@ -68,7 +68,7 @@ namespace detail {
 
             boost::asio::io_service io_service_;
             boost::asio::signal_set signals_;
-            socket socket_;
+            pair_socket socket_;
             boost::thread thread_;
 
             using lock_type = std::unique_lock<std::mutex>;
@@ -79,7 +79,7 @@ namespace detail {
             std::exception_ptr last_error_;
 
             concept()
-                : socket_(io_service_, ZMQ_PAIR)
+                : socket_(io_service_)
                 , signals_(io_service_, SIGINT, SIGTERM)
                 , ready_(false)
                 , stopped_(true)
@@ -89,8 +89,8 @@ namespace detail {
 
             virtual ~concept() = default;
 
-            socket peer_socket(boost::asio::io_service & peer) {
-                socket res(peer, ZMQ_PAIR);
+            pair_socket peer_socket(boost::asio::io_service & peer) {
+                pair_socket res(peer);
                 auto uri = socket_.endpoint();
                 BOOST_ASSERT_MSG(!uri.empty(), "uri empty");
                 res.connect(uri);
