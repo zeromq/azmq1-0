@@ -13,6 +13,7 @@
 #include "option.hpp"
 #include "io_service.hpp"
 #include "message.hpp"
+#include "detail/basic_io_object.hpp"
 #include "detail/send_op.hpp"
 #include "detail/receive_op.hpp"
 
@@ -30,7 +31,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
  *  \remark sockets are movable, but not copyable
  */
 class socket :
-    public boost::asio::basic_io_object<io_service::service_type> {
+    public azmq::detail::basic_io_object<io_service::service_type> {
 
 public:
     using native_handle_type = service_type::native_handle_type;
@@ -101,15 +102,15 @@ public:
      */
     explicit socket(boost::asio::io_service& ios,
                     int type,
-                    bool optimize_single_threaded = false) :
-        boost::asio::basic_io_object<io_service::service_type>(ios) {
+                    bool optimize_single_threaded = false)
+            : azmq::detail::basic_io_object<io_service::service_type>(ios) {
         boost::system::error_code ec;
         if (get_service().do_open(implementation, type, optimize_single_threaded, ec))
             throw boost::system::system_error(ec);
     }
 
-    socket(socket&& other) :
-        boost::asio::basic_io_object<io_service::service_type>(other.get_io_service()) {
+    socket(socket&& other)
+        : azmq::detail::basic_io_object<io_service::service_type>(other.get_io_service()) {
         get_service().move_construct(implementation,
                                      other.get_service(),
                                      other.implementation);
@@ -631,67 +632,6 @@ public:
         return get_service().native_handle(implementation);
     }
 
-    /** \brief Allows the caller to associate an instance which conforms to the
-     *  following protocol:
-     *      struct handler {
-     *          void on_install(io_service& ios, void* socket);
-     *          void on_remove();
-     *
-     *          template<typename Option>
-     *          error_code set_option(Option const&, error_code &);
-     *
-     *          template<typename Option>
-     *          error_code get_option(Option &, error_code &);
-     *      };
-     *  with the supplied socket.
-     *  \remark set/get_option allows the caller to interract with the handler
-     *  from the socket interface. If the handler does not support the supplied,
-     *  option, the handler should return errc::not_supported.  Handler options
-     *  should satisfy the following protocol:
-     *      struct option {
-     *          int name() const;
-     *          const void* data() const;
-     *          void* data();
-     *          size_t size() const;
-     *          void resize(size_t);
-     *      };
-     *  \returns true if the handler was installed, false if a handler is already
-     *  associated.
-     */
-    template<typename T>
-    bool associate_ext(T ext) {
-        return get_service().associate_ext<T>(implementation, std::move(ext));
-    }
-
-    template<typename T>
-    bool remove_ext() {
-        return get_service().remove_ext<T>(implementation);
-    }
-
-    /** \brief as for set_option, but only for an associated extension
-     *  \tparam Extension to set the option on
-     *  \tparam Option type which must conform the asio SettableSocketOption concept
-     *  \param ec error_code to capture error
-     *  \param opt T option to set
-     */
-    template<typename Extension, typename Option>
-    friend boost::system::error_code set_socket_option(socket & s, Option const& opt,
-                                                       boost::system::error_code & ec) {
-        return s.get_service().set_option<Extension>(s.implementation, opt, ec);
-    }
-
-    /** \brief as for get_option bu only for an associated extension
-     *  \tparam Extension to get option from
-     *  \tparam T must conform to the asio GettableSocketOption concept
-     *  \param opt T option to get
-     *  \param ec error_code to capture error
-     */
-    template<typename Extension, typename Option>
-    boost::system::error_code get_socket_option(socket & s, Option & opt,
-                                                boost::system::error_code & ec) {
-        return s.get_service().get_option<Extension>(s.implementation, opt, ec);
-    }
-
     /** \brief monitor events on a socket
         *  \tparam Handler handler function which conforms to the SocketMonitorHandler concept
         *  \param ios io_service on which to bind the returned monitor socket
@@ -728,32 +668,6 @@ public:
         return res;
     }
 };
-
-/** \brief as for set_option, but only for an associated extension
-*  \tparam Extension to set option on
-*  \tparam T type which must conform the asio SettableSocketOption concept
-*  \param opt T option to set
-*  \throw boost::system::system_error
-*/
-template<typename Extension, typename Option>
-void set_socket_option(socket & s, Option const& opt) {
-    boost::system::error_code ec;
-    if (set_socket_option<Extension>(s, opt, ec))
-        throw boost::system::system_error(ec);
-}
-
-/** \brief as for get_option but only for an associated extension
-*  \tparam Extension to get option from
-*  \tparam T must conform to the asio GettableSocketOption concept
-*  \param opt T option to get
-*  \throw boost::system::system_error
-*/
-template<typename Extension, typename Option>
-void get_socket_option(socket & s, Option & opt) {
-    boost::system::error_code ec;
-    if (get_socket_option<Extension>(s, opt, ec))
-        throw boost::system::system_error(ec);
-}
 
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace azmq

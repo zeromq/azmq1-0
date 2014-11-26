@@ -13,6 +13,7 @@
 #include "../socket.hpp"
 #include "../option.hpp"
 #include "service_base.hpp"
+#include "socket_service.hpp"
 
 #include <boost/assert.hpp>
 #include <boost/asio/signal_set.hpp>
@@ -57,7 +58,7 @@ namespace detail {
         static socket make_pipe(boost::asio::io_service & ios, bool defer_start, T&& data) {
             auto p = std::make_shared<model<T>>(std::forward<T>(data));
             auto res = p->peer_socket(ios);
-            res.associate_ext(handler(std::move(p), defer_start));
+            associate_ext(res, handler(std::move(p), defer_start));
             return std::move(res);
         }
 

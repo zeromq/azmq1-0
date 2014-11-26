@@ -12,6 +12,7 @@
 #include "../message.hpp"
 #include "../option.hpp"
 #include "../util/scope_guard.hpp"
+#include "basic_io_object.hpp"
 #include "service_base.hpp"
 #include "context_ops.hpp"
 #include "socket_ops.hpp"
@@ -153,6 +154,8 @@ namespace detail {
         };
         using unique_lock = boost::unique_lock<per_descriptor_data>;
         using implementation_type = std::shared_ptr<per_descriptor_data>;
+
+        using core_access = azmq::detail::core_access<socket_service>;
 
         explicit socket_service(boost::asio::io_service & ios)
             : azmq::detail::service_base<socket_service>(ios)
@@ -416,164 +419,177 @@ namespace detail {
             return socket_ops::monitor(impl->socket_, events, ec);
         }
 
+    private:
+        context_type ctx_;
+
+        bool is_shutdown(implementation_type & impl, op_type o, boost::system::error_code & ec) {
+            if (is_shutdown(o, impl->shutdown_)) {
+                ec = make_error_code(boost::system::errc::operation_not_permitted);
+                return true;
+            }
+            return false;
+        }
+
+        static bool is_shutdown(op_type o, shutdown_type what) {
+            return (o == op_type::write_op) ? what >= shutdown_type::send
+                                            : what >= shutdown_type::receive;
+        }
+
+        static void cancel_ops(implementation_type & impl) {
+            op_queue_type ops;
+            impl->cancel_ops(reactor_op::canceled(), ops);
+
+            while (!ops.empty())
+                ops.pop_front_and_dispose(reactor_op::do_complete);
+        }
+
+        using weak_descriptor_ptr = std::weak_ptr<per_descriptor_data>;
+        struct descriptor_map {
+            ~descriptor_map() {
+                lock_type l{ mutex_ };
+                for(auto&& descriptor : map_)
+                    if (auto impl = descriptor.second.lock()) {
+                        auto handle = impl->sd_->native_handle();
+                        cancel_ops(impl);
+                    }
+            }
+
+            void register_descriptor(implementation_type & impl) {
+                lock_type l{ mutex_ };
+                auto handle = impl->sd_->native_handle();
+                map_.emplace(handle, impl);
+            }
+
+            void unregister_descriptor(implementation_type & impl) {
+                lock_type l{ mutex_ };
+                auto handle = impl->sd_->native_handle();
+                map_.erase(handle);
+            }
+
         private:
-            context_type ctx_;
+            mutable boost::mutex mutex_;
+            using lock_type = boost::unique_lock<boost::mutex>;
+            using key_type = socket_ops::native_handle_type;
+            boost::container::flat_map<key_type, weak_descriptor_ptr> map_;
+        };
 
-            bool is_shutdown(implementation_type & impl, op_type o, boost::system::error_code & ec) {
-                if (is_shutdown(o, impl->shutdown_)) {
-                    ec = make_error_code(boost::system::errc::operation_not_permitted);
-                    return true;
-                }
-                return false;
-            }
+        struct reactor_handler {
+            descriptor_map & descriptors_;
+            weak_descriptor_ptr per_descriptor_data_;
 
-            static bool is_shutdown(op_type o, shutdown_type what) {
-                return (o == op_type::write_op) ? what >= shutdown_type::send
-                                                : what >= shutdown_type::receive;
-            }
+            reactor_handler(descriptor_map & descriptors,
+                            implementation_type per_descriptor_data)
+                : descriptors_(descriptors)
+                , per_descriptor_data_(per_descriptor_data)
+            { }
 
-            static void cancel_ops(implementation_type & impl) {
+            void operator()(boost::system::error_code const& e, size_t) const {
+                boost::system::error_code ec{ e };
                 op_queue_type ops;
-                impl->cancel_ops(reactor_op::canceled(), ops);
+                if(auto p = per_descriptor_data_.lock()) {
+                    unique_lock l{ *p };
+                    p->scheduled_ = false;
+                    int evs = 0;
+
+                    if (!ec)
+                        evs = socket_ops::get_events(p->socket_, ec);
+
+                    if (!ec)
+                        p->scheduled_ = p->perform_ops(evs, ops);
+                    else
+                        p->cancel_ops(ec, ops);
+
+                    if (p->scheduled_)
+                        schedule(descriptors_, p, true);
+                    else
+                        descriptors_.unregister_descriptor(p);
+                }
                 while (!ops.empty())
                     ops.pop_front_and_dispose(reactor_op::do_complete);
             }
 
-            using weak_descriptor_ptr = std::weak_ptr<per_descriptor_data>;
-            struct descriptor_map {
-                ~descriptor_map() {
-                    lock_type l{ mutex_ };
-                    for(auto&& descriptor : map_)
-                        if (auto impl = descriptor.second.lock()) {
-                            auto handle = impl->sd_->native_handle();
-                            cancel_ops(impl);
-                        }
-                }
-
-                void register_descriptor(implementation_type & impl) {
-                    lock_type l{ mutex_ };
-                    auto handle = impl->sd_->native_handle();
-                    map_.emplace(handle, impl);
-                }
-
-                void unregister_descriptor(implementation_type & impl) {
-                    lock_type l{ mutex_ };
-                    auto handle = impl->sd_->native_handle();
-                    map_.erase(handle);
-                }
-
-            private:
-                mutable boost::mutex mutex_;
-                using lock_type = boost::unique_lock<boost::mutex>;
-                using key_type = socket_ops::native_handle_type;
-                boost::container::flat_map<key_type, weak_descriptor_ptr> map_;
-            };
-
-            struct reactor_handler {
-                descriptor_map & descriptors_;
-                weak_descriptor_ptr per_descriptor_data_;
-
-                reactor_handler(descriptor_map & descriptors,
-                                implementation_type per_descriptor_data)
-                    : descriptors_(descriptors)
-                    , per_descriptor_data_(per_descriptor_data)
-                { }
-
-                void operator()(boost::system::error_code const& e, size_t) const {
-                    boost::system::error_code ec{ e };
-                    op_queue_type ops;
-                    if(auto p = per_descriptor_data_.lock()) {
-                        unique_lock l{ *p };
-                        p->scheduled_ = false;
-                        int evs = 0;
-
-                        if (!ec)
-                            evs = socket_ops::get_events(p->socket_, ec);
-
-                        if (!ec)
-                            p->scheduled_ = p->perform_ops(evs, ops);
-                        else
-                            p->cancel_ops(ec, ops);
-
-                        if (p->scheduled_)
-                            schedule(descriptors_, p, true);
-                        else
-                            descriptors_.unregister_descriptor(p);
-                    }
-                    while (!ops.empty())
-                        ops.pop_front_and_dispose(reactor_op::do_complete);
-                }
-
-                static void schedule(descriptor_map & descriptors, implementation_type & impl, bool reschedule = false) {
-                    reactor_handler handler(descriptors, impl);
-                    if (!reschedule)
-                        descriptors.register_descriptor(impl);
-                    int evs = 0;
-                    boost::system::error_code ec;
-                    evs = socket_ops::get_events(impl->socket_, ec);
-                    if (evs || ec) {
-                        impl->sd_->get_io_service().post([handler, ec] { handler(ec, 0); });
-                    } else {
-                        impl->sd_->async_read_some(boost::asio::null_buffers(),
-                                                   std::move(handler));
-                    }
-                }
-            };
-
-            struct deferred_completion {
-                std::weak_ptr<per_descriptor_data> owner_;
-                reactor_op *op_;
-
-                deferred_completion(implementation_type owner,
-                                    reactor_op_ptr op)
-                    : owner_(owner)
-                    , op_(op.release())
-                { }
-
-                void operator()() {
-                    reactor_op::do_complete(op_);
-                    if (auto p = owner_.lock()) {
-                        unique_lock l{ *p };
-                        p->in_speculative_completion_ = false;
-                    }
-                }
-
-                friend
-                bool asio_handler_is_continuation(deferred_completion* handler) { return true; }
-            };
-
-            descriptor_map descriptors_;
-
-            boost::system::error_code enqueue(implementation_type & impl,
-                                            op_type o, reactor_op_ptr & op) {
-                unique_lock l{ *impl };
+            static void schedule(descriptor_map & descriptors, implementation_type & impl, bool reschedule = false) {
+                reactor_handler handler(descriptors, impl);
+                if (!reschedule)
+                    descriptors.register_descriptor(impl);
+                int evs = 0;
                 boost::system::error_code ec;
-                if (is_shutdown(impl, o, ec))
-                    return ec;
-
-                // we have at most one speculative completion in flight at any time
-                if (impl->allow_speculative_ && !impl->in_speculative_completion_) {
-                    // attempt to execute speculatively when the op_queue is empty
-                    if (impl->op_queue_[o].empty()) {
-                        if (op->do_perform(impl->socket_)) {
-                            impl->in_speculative_completion_ = true;
-                            l.unlock();
-                            get_io_service().post(deferred_completion(impl, std::move(op)));
-                            return ec;
-                        }
-                    }
+                evs = socket_ops::get_events(impl->socket_, ec);
+                if (evs || ec) {
+                    impl->sd_->get_io_service().post([handler, ec] { handler(ec, 0); });
+                } else {
+                    impl->sd_->async_read_some(boost::asio::null_buffers(),
+                                                std::move(handler));
                 }
-                impl->op_queue_[o].push_back(*op.release());
-
-                if (!impl->scheduled_) {
-                    impl->scheduled_ = true;
-                    l.unlock();
-                    reactor_handler::schedule(descriptors_, impl);
-                }
-                return ec;
             }
         };
-    } // namespace detail
-    } // namespace azmq
+
+        struct deferred_completion {
+            std::weak_ptr<per_descriptor_data> owner_;
+            reactor_op *op_;
+
+            deferred_completion(implementation_type owner,
+                                reactor_op_ptr op)
+                : owner_(owner)
+                , op_(op.release())
+            { }
+
+            void operator()() {
+                reactor_op::do_complete(op_);
+                if (auto p = owner_.lock()) {
+                    unique_lock l{ *p };
+                    p->in_speculative_completion_ = false;
+                }
+            }
+
+            friend
+            bool asio_handler_is_continuation(deferred_completion* handler) { return true; }
+        };
+
+        descriptor_map descriptors_;
+
+        boost::system::error_code enqueue(implementation_type & impl,
+                                        op_type o, reactor_op_ptr & op) {
+            unique_lock l{ *impl };
+            boost::system::error_code ec;
+            if (is_shutdown(impl, o, ec))
+                return ec;
+
+            // we have at most one speculative completion in flight at any time
+            if (impl->allow_speculative_ && !impl->in_speculative_completion_) {
+                // attempt to execute speculatively when the op_queue is empty
+                if (impl->op_queue_[o].empty()) {
+                    if (op->do_perform(impl->socket_)) {
+                        impl->in_speculative_completion_ = true;
+                        l.unlock();
+                        get_io_service().post(deferred_completion(impl, std::move(op)));
+                        return ec;
+                    }
+                }
+            }
+            impl->op_queue_[o].push_back(*op.release());
+
+            if (!impl->scheduled_) {
+                impl->scheduled_ = true;
+                l.unlock();
+                reactor_handler::schedule(descriptors_, impl);
+            }
+            return ec;
+        }
+    };
+
+    template<typename T, typename Extension>
+    static bool associate_ext(T & that, Extension&& ext) {
+        socket_service::core_access access{ that };
+        return access.service().associate_ext(access.implementation(), std::forward<Extension>(ext));
+    }
+
+    template<typename T, typename Extension>
+    static bool remove_ext(T & that) {
+        socket_service::core_access access{ that };
+        return access.service().remove_ext<Extension>(access.implementation());
+    }
+} // namespace detail
+} // namespace azmq
 #endif // AZMQ_DETAIL_SOCKET_SERVICE_HPP__
 

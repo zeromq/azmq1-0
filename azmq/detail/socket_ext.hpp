@@ -19,15 +19,9 @@
 namespace azmq {
 namespace detail {
     struct socket_ext {
-        template<
-            typename T,
-            class Disabler =
-                typename std::enable_if<
-                    !std::is_base_of<socket_ext, typename std::decay<T>::type>::value
-                >::type
-        >
-        socket_ext(T&& data)
-            : ptr_(new model<typename std::decay<T>::type>(std::forward<T>(data)))
+        template<typename T>
+        socket_ext(T data)
+            : ptr_(new model<T>(std::move(data)))
         { }
 
         // MSVS 2013 can not generate move ctor/assignment
@@ -97,8 +91,7 @@ namespace detail {
         struct model : concept {
             T data_;
 
-            model(const T& data): data_(data) { }
-            model(T&& data): data_(std::move(data)) { }
+            model(T data): data_(std::move(data)) { }
 
             void on_install(boost::asio::io_service & ios, void * socket) override { data_.on_install(ios, socket); }
             void on_remove() override { data_.on_remove(); }
