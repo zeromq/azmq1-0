@@ -1,5 +1,10 @@
-#include_directories("${PROJECT_SOURCE_DIR}/src")
-add_executable(test_thread main.cpp)
-target_link_libraries(test_thread ${Boost_LIBRARIES}
-                                  ${ZeroMQ_LIBRARIES}
-                                  azmq)
+project(thread)
+
+add_executable(${PROJECT_NAME} main.cpp)
+
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES}
+                                      ${ZeroMQ_LIBRARIES}
+                                      azmq)
+
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+
