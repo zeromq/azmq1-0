@@ -142,14 +142,12 @@ namespace detail {
             virtual void run() = 0;
 
             static void run(ptr p) {
-                std::cout << __PRETTY_FUNCTION__ << std::endl;
                 lock_type l { p->mutex_ };
                 p->signals_.async_wait([p](boost::system::error_code const&, int) {
                     p->io_service_.stop();
                 });
                 p->stopped_ = false;
                 p->thread_ = boost::thread([p] {
-                    std::cout << __PRETTY_FUNCTION__ << std::endl;
                     p->ready();
                     try {
                         p->run();
