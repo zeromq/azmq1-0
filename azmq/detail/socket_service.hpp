@@ -306,9 +306,9 @@ namespace detail {
                                        socket_ops::endpoint_type endpoint,
                                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (socket_ops::bind(impl->socket_, std::move(endpoint), ec))
+            if (socket_ops::bind(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_ = endpoint;
+            impl->endpoint_ = std::move(endpoint);
             return ec;
         }
 
@@ -316,9 +316,9 @@ namespace detail {
                                           socket_ops::endpoint_type endpoint,
                                           boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (socket_ops::connect(impl->socket_, std::move(endpoint), ec))
+            if (socket_ops::connect(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_ = endpoint;
+            impl->endpoint_ = std::move(endpoint);
             return ec;
         }
 
@@ -434,11 +434,7 @@ namespace detail {
 
             static void cancel_ops(implementation_type & impl) {
                 op_queue_type ops;
-                {
-                    unique_lock l{ *impl };
-                    impl->cancel_ops(reactor_op::canceled(), ops);
-                }
-
+                impl->cancel_ops(reactor_op::canceled(), ops);
                 while (!ops.empty())
                     ops.pop_front_and_dispose(reactor_op::do_complete);
             }
