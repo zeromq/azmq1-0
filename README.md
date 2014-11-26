@@ -50,7 +50,7 @@ To change the default install location use `-DCMAKE_INSTALL_PREFIX` when invokin
 To change where the build looks for Boost and ZeroMQ use `-DBOOST_ROOT=<my custom Boost install>` and `-DZMQ_ROOT=<my custom ZeroMQ install>` when invoking CMake. Or set `BOOST_ROOT` and `ZMQ_ROOT` environment variables.
 
 ## Example Code
-This is an aziomq version of the code presented in the ZeroMQ guide at
+This is an azmq version of the code presented in the ZeroMQ guide at
 http://zeromq.org/intro:read-the-manual
 
 ```
