@@ -16,15 +16,17 @@ may be freely mixed with other Asio socket types (raw TCP/UDP/Serial/etc.).
 ## Building and installation
 
 Building requires a recent version of CMake (2.8 or later), and a C++ compiler
-which supports '-std=c++11'.  Currently this has been tested with -
-* OSX10.9 Mavericks XCode6
-* Arch Linux, Ubuntu w/GCC4.8
+which supports C++11. Currently this has been tested with -
+* Xcode 6 on OS X 10.9
+* Xcode 6.1 on OS X 10.10
+* GCC4.8 on Arch Linux and Ubuntu
+* Microsoft Visual Studio 2013 on Windows 7
 
 Library dependencies are -
 * Boost 1.53 or later
 * ZeroMQ 4.0.x
 
-To build -
+To build on Linux / OS X -
 ```
 $ mkdir build && cd build
 $ cmake ..
@@ -33,17 +35,19 @@ $ make test
 $ make install
 ```
 
-To change the default install location use -DCMAKE_INSTALL_PREFIX when invoking cmake
-You can also change where the build looks for Boost and CMake by setting -
+To build on Windows -
+```
+> mkdir build
+> cd build
+> cmake ..
+> cmake --build . --config Release
+> ctest . -C Release
+```
+You can also open Visual Studio solution from `build` directory after invoking CMake.
 
-```
-$ export BOOST_ROOT=<my custom Boost install>
-$ export ZMQ_ROOT=<my custom ZeroMQ install>
-$ mkdir build && cd build
-$ cmake ..
-$ make
-$ ...
-```
+To change the default install location use `-DCMAKE_INSTALL_PREFIX` when invoking CMake.
+
+To change where the build looks for Boost and ZeroMQ use `-DBOOST_ROOT=<my custom Boost install>` and `-DZMQ_ROOT=<my custom ZeroMQ install>` when invoking CMake. Or set `BOOST_ROOT` and `ZMQ_ROOT` environment variables.
 
 ## Example Code
 This is an aziomq version of the code presented in the ZeroMQ guide at
