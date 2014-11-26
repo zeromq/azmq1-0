@@ -29,7 +29,7 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/config")
 
-find_package(Boost 1.53 COMPONENTS system log unit_test_framework date_time thread chrono REQUIRED)
+find_package(Boost 1.54 COMPONENTS system log unit_test_framework date_time thread chrono REQUIRED)
 find_package(ZeroMQ 4.0 REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS}
