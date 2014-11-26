@@ -434,11 +434,7 @@ namespace detail {
 
             static void cancel_ops(implementation_type & impl) {
                 op_queue_type ops;
-                {
-                    unique_lock l{ *impl };
-                    impl->cancel_ops(reactor_op::canceled(), ops);
-                }
-
+                impl->cancel_ops(reactor_op::canceled(), ops);
                 while (!ops.empty())
                     ops.pop_front_and_dispose(reactor_op::do_complete);
             }
