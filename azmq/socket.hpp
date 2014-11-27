@@ -668,6 +668,7 @@ public:
         return res;
     }
 };
+AZMQ_V1_INLINE_NAMESPACE_END
 
 namespace detail {
     template<int Type>
@@ -696,6 +697,7 @@ namespace detail {
     };
 }
 
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
 using pair_socket = detail::specialized_socket<ZMQ_PAIR>;
 using req_socket = detail::specialized_socket<ZMQ_REQ>;
 using rep_socket = detail::specialized_socket<ZMQ_REP>;
@@ -708,8 +710,8 @@ using xsub_socket = detail::specialized_socket<ZMQ_XSUB>;
 using push_socket = detail::specialized_socket<ZMQ_PUSH>;
 using pull_socket = detail::specialized_socket<ZMQ_PULL>;
 using stream_socket = detail::specialized_socket<ZMQ_STREAM>;
-
 AZMQ_V1_INLINE_NAMESPACE_END
+
 } // namespace azmq
 #endif // AZMQ_SOCKET_HPP_
 
