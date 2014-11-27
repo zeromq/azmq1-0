@@ -669,127 +669,45 @@ public:
     }
 };
 
-// aliases for specific socket types
-// note - we expect these to get sliced to socket, DO NOT add any data members
-class pair_socket : public socket {
-public:
-    pair_socket(boost::asio::io_service & ios,
-                bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_PAIR, optimize_single_threaded)
+namespace detail {
+    template<int Type>
+    class specialized_socket: public socket
     {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
+        typedef socket Base;
 
-class req_socket : public socket {
-public:
-    req_socket(boost::asio::io_service & ios,
-               bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_REQ, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
+    public:
+        specialized_socket(boost::asio::io_service & ios,
+                           bool optimize_single_threaded = false)
+            : Base(ios, Type, optimize_single_threaded)
+        {
+            // Note that we expect these to get sliced to socket, so DO NOT add any data members
+            static_assert(sizeof(*this) == sizeof(socket), "Specialized socket must not have any specific data members");
+        }
 
-class rep_socket : public socket {
-public:
-    rep_socket(boost::asio::io_service & ios,
-               bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_REP, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
+        specialized_socket(specialized_socket&& op)
+            : Base(std::move(op))
+        {}
 
-class dealer_socket : public socket {
-public:
-    dealer_socket(boost::asio::io_service & ios,
-                  bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_DEALER, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
+        specialized_socket& operator= (specialized_socket&& rhs)
+        {
+            Base::operator=(std::move(rhs));
+            return *this;
+        }
+    };
+}
 
-class router_socket : public socket {
-public:
-    router_socket(boost::asio::io_service & ios,
-                  bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_ROUTER, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class pub_socket : public socket {
-public:
-    pub_socket(boost::asio::io_service & ios,
-               bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_PUB, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class sub_socket : public socket {
-public:
-    sub_socket(boost::asio::io_service & ios,
-               bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_SUB, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class xpub_socket : public socket {
-public:
-    xpub_socket(boost::asio::io_service & ios,
-                bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_XPUB, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class xsub_socket : public socket {
-public:
-    xsub_socket(boost::asio::io_service & ios,
-                bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_XSUB, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class push_socket : public socket {
-public:
-    push_socket(boost::asio::io_service & ios,
-                bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_PUSH, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class pull_socket : public socket {
-public:
-    pull_socket(boost::asio::io_service & ios,
-                bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_PULL, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
-
-class stream_socket : public socket {
-public:
-    stream_socket(boost::asio::io_service & ios,
-                  bool optimize_single_threaded = false)
-        : socket(ios, ZMQ_STREAM, optimize_single_threaded)
-    {
-        static_assert(sizeof(*this) == sizeof(socket), "");
-    }
-};
+using pair_socket = detail::specialized_socket<ZMQ_PAIR>;
+using req_socket = detail::specialized_socket<ZMQ_REQ>;
+using rep_socket = detail::specialized_socket<ZMQ_REP>;
+using dealer_socket = detail::specialized_socket<ZMQ_DEALER>;
+using router_socket = detail::specialized_socket<ZMQ_ROUTER>;
+using pub_socket = detail::specialized_socket<ZMQ_PUB>;
+using sub_socket = detail::specialized_socket<ZMQ_SUB>;
+using xpub_socket = detail::specialized_socket<ZMQ_XPUB>;
+using xsub_socket = detail::specialized_socket<ZMQ_XSUB>;
+using push_socket = detail::specialized_socket<ZMQ_PUSH>;
+using pull_socket = detail::specialized_socket<ZMQ_PULL>;
+using stream_socket = detail::specialized_socket<ZMQ_STREAM>;
 
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace azmq
