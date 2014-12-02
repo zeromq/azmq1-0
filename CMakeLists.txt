@@ -36,7 +36,7 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${ZeroMQ_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR})
 
-enable_testing()
+include(CTest)
 add_subdirectory(test)
 #add_subdirectory(doc/examples)
 
