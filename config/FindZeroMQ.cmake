@@ -35,29 +35,34 @@ else()
     endif()
 endif()
 
-# TODO: implement version extracting for Windows
-if (NOT ${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
-    function(_zmqver_EXTRACT _ZeroMQ_VER_COMPONENT _ZeroMQ_VER_OUTPUT)
-        execute_process(
-            COMMAND grep "#define ${_ZMQ_VER_COMPONENT}"
-            COMMAND cut -d\  -f3
-            RESULT_VARIABLE _zmqver_RESULT
-            OUTPUT_VARIABLE _zmqver_OUTPUT
-            INPUT_FILE ${_ZeroMQ_H}
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-        set(${_ZeroMQ_VER_OUTPUT} ${_zmqver_OUTPUT} PARENT_SCOPE)
-    endfunction()
+function(_zmqver_EXTRACT _ZeroMQ_VER_COMPONENT _ZeroMQ_VER_OUTPUT)
+    set(CMAKE_MATCH_1 "0")
+    set(_ZeroMQ_expr "^[ \\t]*#define[ \\t]+${_ZeroMQ_VER_COMPONENT}[ \\t]+([0-9]+)$")
+    file(STRINGS "${_ZeroMQ_H}" _ZeroMQ_ver REGEX "${_ZeroMQ_expr}")
+    string(REGEX MATCH "${_ZeroMQ_expr}" ZeroMQ_ver "${_ZeroMQ_ver}")
+    set(${_ZeroMQ_VER_OUTPUT} "${CMAKE_MATCH_1}" PARENT_SCOPE)
+endfunction()
 
-    _zmqver_EXTRACT("ZMQ_VERSION_MAJOR" ZeroMQ_VERSION_MAJOR)
-    _zmqver_EXTRACT("ZMQ_VERSION_MINOR" ZeroMQ_VERSION_MINOR)
+_zmqver_EXTRACT("ZMQ_VERSION_MAJOR" ZeroMQ_VERSION_MAJOR)
+_zmqver_EXTRACT("ZMQ_VERSION_MINOR" ZeroMQ_VERSION_MINOR)
+_zmqver_EXTRACT("ZMQ_VERSION_PATCH" ZeroMQ_VERSION_PATCH)
 
-    set(ZeroMQ_FIND_VERSION_EXACT "${ZMQ_VERSION_MAJOR}.${ZMQ_VERSION_MINOR}")
+# We should provide version to find_package_handle_standard_args in the same format as it was requested,
+# otherwise it can't compare exact version match.
+if (ZeroMQ_FIND_VERSION_COUNT GREATER 2)
+    set(ZeroMQ_VERSION "${ZeroMQ_VERSION_MAJOR}.${ZeroMQ_VERSION_MINOR}.${ZeroMQ_VERSION_PATCH}")
+else()
+    # User has requested ZeroMQ version without patch part => user is not interested in specific patch =>
+    # any patch should be an exact match.
+    set(ZeroMQ_VERSION "${ZeroMQ_VERSION_MAJOR}.${ZeroMQ_VERSION_MINOR}")
 endif()
 
 find_package_handle_standard_args(ZeroMQ FOUND_VAR ZeroMQ_FOUND
-                                      REQUIRED_VARS ZeroMQ_INCLUDE_DIRS ZeroMQ_LIBRARIES
-                                      VERSION_VAR ZeroMQ_VERSION)
+    REQUIRED_VARS ZeroMQ_INCLUDE_DIRS ZeroMQ_LIBRARIES
+    VERSION_VAR ZeroMQ_VERSION)
 
 if (ZeroMQ_FOUND)
-    mark_as_advanced(ZeroMQ_FIND_VERSION_EXACT ZeroMQ_VERSION ZeroMQ_INCLUDE_DIRS ZeroMQ_LIBRARIES)
+    message(STATUS "ZeroMQ version: ${ZeroMQ_VERSION_MAJOR}.${ZeroMQ_VERSION_MINOR}.${ZeroMQ_VERSION_PATCH}")
+    mark_as_advanced(ZeroMQ_INCLUDE_DIRS ZeroMQ_LIBRARIES ZeroMQ_VERSION
+        ZeroMQ_VERSION_MAJOR ZeroMQ_VERSION_MINOR ZeroMQ_VERSION_PATCH)
 endif()
