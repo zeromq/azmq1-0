@@ -103,11 +103,31 @@ namespace detail {
             return ec;
         }
 
+        static boost::system::error_code unbind(socket_type & socket,
+                                                endpoint_type const& ep,
+                                                boost::system::error_code & ec) {
+            BOOST_ASSERT_MSG(socket, "invalid socket");
+            auto rc = zmq_unbind(socket.get(), ep.c_str());
+            if (rc < 0)
+                ec = make_error_code();
+            return ec;
+        }
+
         static boost::system::error_code connect(socket_type & socket,
                                                  endpoint_type const& ep,
                                                  boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(socket, "invalid socket");
             auto rc = zmq_connect(socket.get(), ep.c_str());
+            if (rc < 0)
+                ec = make_error_code();
+            return ec;
+        }
+
+        static boost::system::error_code disconnect(socket_type & socket,
+                                                    endpoint_type const& ep,
+                                                    boost::system::error_code & ec) {
+            BOOST_ASSERT_MSG(socket, "invalid socket");
+            auto rc = zmq_disconnect(socket.get(), ep.c_str());
             if (rc < 0)
                 ec = make_error_code();
             return ec;
@@ -174,6 +194,15 @@ namespace detail {
             return rc;
         }
 
+        static size_t send(boost::asio::mutable_buffer const& buf,
+                           socket_type & socket,
+                           flags_type flags,
+                           boost::system::error_code & ec) {
+            auto pv = boost::asio::buffer_cast<void const*>(buf);
+            auto len = boost::asio::buffer_size(buf);
+            return send(message(boost::asio::const_buffer(pv, len)), socket, flags, ec);
+        };
+
         template<typename ConstBufferSequence>
         static size_t send(ConstBufferSequence const& buffers,
                            socket_type & socket,
@@ -182,10 +211,12 @@ namespace detail {
             size_t res = 0;
             auto last = std::distance(std::begin(buffers), std::end(buffers)) - 1;
             auto index = 0u;
+            message msg;
             for (auto it = std::begin(buffers); it != std::end(buffers); ++it, ++index) {
+                msg.rebuild(*it);
                 auto f = index == last ? flags & ~ZMQ_SNDMORE
                                        : flags;
-                res += send(*it, socket, f, ec);
+                res += send(msg, socket, f, ec);
                 if (ec) return 0;
             }
             return res;

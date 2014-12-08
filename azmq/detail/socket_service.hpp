@@ -315,6 +315,16 @@ namespace detail {
             return ec;
         }
 
+        boost::system::error_code unbind(implementation_type & impl,
+                                         socket_ops::endpoint_type const& endpoint,
+                                         boost::system::error_code & ec) {
+            unique_lock l{ *impl };
+            if (socket_ops::unbind(impl->socket_, endpoint, ec))
+                return ec;
+            impl->endpoint_.clear();
+            return ec;
+        }
+
         boost::system::error_code connect(implementation_type & impl,
                                           socket_ops::endpoint_type endpoint,
                                           boost::system::error_code & ec) {
@@ -322,6 +332,16 @@ namespace detail {
             if (socket_ops::connect(impl->socket_, endpoint, ec))
                 return ec;
             impl->endpoint_ = std::move(endpoint);
+            return ec;
+        }
+
+        boost::system::error_code disconnect(implementation_type & impl,
+                                             socket_ops::endpoint_type const& endpoint,
+                                             boost::system::error_code & ec) {
+            unique_lock l{ *impl };
+            if (socket_ops::disconnect(impl->socket_, endpoint, ec))
+                return ec;
+            impl->endpoint_.clear();
             return ec;
         }
 

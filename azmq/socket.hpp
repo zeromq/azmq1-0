@@ -147,6 +147,27 @@ public:
             throw boost::system::system_error(ec);
     }
 
+    /** \brief Stop accepting connection on this socket
+     *  \param addr std::string const& zeromq URI to unbind
+     *  \param ec error_code to capture error
+     *  \see http://api.zeromq.org/4-0:zmq-unbind
+     */
+    boost::system::error_code unbind(std::string const& addr,
+                                     boost::system::error_code & ec) {
+        return get_service().unbind(implementation, addr, ec);
+    }
+
+    /** \brief Stop accepting connection on this socket
+     *  \param addr std::string const& zeromq URI to unbind
+     *  \throw boost::system::system_error
+     *  \see http://api.zeromq.org/4-0:zmq-unbind
+     */
+    void unbind(std::string const& addr) {
+        boost::system::error_code ec;
+        if (unbind(addr, ec))
+            throw boost::system::system_error(ec);
+    }
+
     /** \brief Create outgoing connection from this socket
      *  \param addr std::string zeromq URI of endpoint
      *  \param ec error_code to capture error
@@ -165,6 +186,27 @@ public:
     void connect(std::string addr) {
         boost::system::error_code ec;
         if (connect(addr, ec))
+            throw boost::system::system_error(ec);
+    }
+
+    /** \brief Disconnect this socket
+     *  \param addr std::string const& zeromq URI of endpoint
+     *  \param ec error_code to capture error
+     *  \see http://api.zeromq.org/4-1:zmq-disconnect
+     */
+    boost::system::error_code disconnect(std::string const& addr,
+                                         boost::system::error_code & ec) {
+        return get_service().disconnect(implementation, addr, ec);
+    }
+
+    /** \brief Disconnect this socket
+     *  \param addr std::string const& zeromq URI of endpoint
+     *  \throw boost::system::system_error
+     *  \see http://api.zeromq.org/4-1:zmq-disconnect
+     */
+    void disconnect(std::string const& addr) {
+        boost::system::error_code ec;
+        if (disconnect(addr, ec))
             throw boost::system::system_error(ec);
     }
 
