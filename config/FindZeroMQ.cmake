@@ -3,9 +3,9 @@
 # Variables
 # ZMQ_ROOT - set this to a location where ZeroMQ may be found
 #
-# ZMQ_FOUND - True of ZeroMQ found
-# ZMQ_INCLUDE_DIRS - Location of ZeroMQ includes
-# ZMQ_LIBRARIS - ZeroMQ libraries
+# ZeroMQ_FOUND - True of ZeroMQ found
+# ZeroMQ_INCLUDE_DIRS - Location of ZeroMQ includes
+# ZeroMQ_LIBRARIES - ZeroMQ libraries
 
 include(FindPackageHandleStandardArgs)
 
