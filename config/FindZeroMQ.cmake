@@ -48,7 +48,7 @@ _zmqver_EXTRACT("ZMQ_VERSION_MINOR" ZeroMQ_VERSION_MINOR)
 _zmqver_EXTRACT("ZMQ_VERSION_PATCH" ZeroMQ_VERSION_PATCH)
 
 # We should provide version to find_package_handle_standard_args in the same format as it was requested,
-# otherwise it can't compare exact version match.
+# otherwise it can't check whether version matches exactly.
 if (ZeroMQ_FIND_VERSION_COUNT GREATER 2)
     set(ZeroMQ_VERSION "${ZeroMQ_VERSION_MAJOR}.${ZeroMQ_VERSION_MINOR}.${ZeroMQ_VERSION_PATCH}")
 else()
