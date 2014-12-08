@@ -105,6 +105,8 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             return boost::asio::buffer(pv, size());
         }
 
+        void * data() { return zmq_msg_data(const_cast<zmq_msg_t*>(&msg_)); }
+
         template<typename T>
         T const& buffer_cast() const {
             auto buf = boost::asio::buffer(*this);
