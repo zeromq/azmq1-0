@@ -103,11 +103,31 @@ namespace detail {
             return ec;
         }
 
+        static boost::system::error_code unbind(socket_type & socket,
+                                                endpoint_type const& ep,
+                                                boost::system::error_code & ec) {
+            BOOST_ASSERT_MSG(socket, "invalid socket");
+            auto rc = zmq_unbind(socket.get(), ep.c_str());
+            if (rc < 0)
+                ec = make_error_code();
+            return ec;
+        }
+
         static boost::system::error_code connect(socket_type & socket,
                                                  endpoint_type const& ep,
                                                  boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(socket, "invalid socket");
             auto rc = zmq_connect(socket.get(), ep.c_str());
+            if (rc < 0)
+                ec = make_error_code();
+            return ec;
+        }
+
+        static boost::system::error_code disconnect(socket_type & socket,
+                                                    endpoint_type const& ep,
+                                                    boost::system::error_code & ec) {
+            BOOST_ASSERT_MSG(socket, "invalid socket");
+            auto rc = zmq_disconnect(socket.get(), ep.c_str());
             if (rc < 0)
                 ec = make_error_code();
             return ec;
