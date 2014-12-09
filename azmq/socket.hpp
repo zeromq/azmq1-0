@@ -709,6 +709,12 @@ public:
             throw boost::system::system_error(ec);
         return res;
     }
+
+    friend std::ostream& operator<<(std::ostream& stm, const socket& that) {
+        auto& s = const_cast<socket&>(that);
+        s.get_service().format(s.implementation, stm);
+        return stm;
+    }
 };
 AZMQ_V1_INLINE_NAMESPACE_END
 
