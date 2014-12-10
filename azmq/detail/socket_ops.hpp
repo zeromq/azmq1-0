@@ -166,6 +166,17 @@ namespace detail {
             return evs;
         }
 
+        static int get_socket_kind(socket_type & socket,
+                                   boost::system::error_code & ec) {
+            BOOST_ASSERT_MSG(socket, "invalid socket");
+            int kind = 0;
+            size_t size = sizeof(kind);
+            auto rc = zmq_getsockopt(socket.get(), ZMQ_TYPE, &kind, &size);
+            if (rc < 0)
+                ec = make_error_code();
+            return kind;
+        }
+
         static size_t send(message const& msg,
                            socket_type & socket,
                            flags_type flags,

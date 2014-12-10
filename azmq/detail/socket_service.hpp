@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <ostream>
 
 namespace azmq {
 namespace detail {
@@ -79,6 +80,7 @@ namespace detail {
             shutdown_type shutdown_ = shutdown_type::none;
             exts_type exts_;
             endpoint_type endpoint_;
+            bool serverish_ = false;
             std::array<op_queue_type, max_ops> op_queue_;
 
             ~per_descriptor_data() {
@@ -135,6 +137,33 @@ namespace detail {
             }
 
             bool is_single_thread() const { return optimize_single_threaded_; }
+
+            void set_endpoint(socket_ops::endpoint_type endpoint, bool serverish) {
+                endpoint_ = std::move(endpoint);
+                serverish_ = serverish;
+            }
+
+            void clear_endpoint() {
+                endpoint_.clear();
+                serverish_ = false;
+            }
+
+            void format(std::ostream & stm) {
+                char const* kinds[] = {"PAIR", "PUB", "SUB", "REQ", "REP",
+                                        "DEALER", "ROUTER", "PULL", "PUSH",
+                                        "XPUB", "XSUB", "STREAM"
+                                      };
+                static_assert(ZMQ_PAIR == 0, "ZMQ_PAIR");
+                boost::system::error_code ec;
+                auto kind = socket_ops::get_socket_kind(socket_, ec);
+                if (ec)
+                    throw boost::system::system_error(ec);
+                BOOST_ASSERT_MSG(kind >= 0 && kind <= ZMQ_STREAM, "kind not in [ZMQ_PAIR, ZMQ_STREAM]");
+                stm << "socket[" << kinds[kind] << "]{ ";
+                if (!endpoint_.empty())
+                    stm << (serverish_ ? '0' : '>') << endpoint_ << ' ';
+                stm << "}";
+            }
 
             void lock() const {
                 if (optimize_single_threaded_) return;
@@ -311,7 +340,7 @@ namespace detail {
             unique_lock l{ *impl };
             if (socket_ops::bind(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_ = std::move(endpoint);
+            impl->set_endpoint(std::move(endpoint), true);
             return ec;
         }
 
@@ -321,7 +350,7 @@ namespace detail {
             unique_lock l{ *impl };
             if (socket_ops::unbind(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_.clear();
+            impl->clear_endpoint();
             return ec;
         }
 
@@ -331,7 +360,7 @@ namespace detail {
             unique_lock l{ *impl };
             if (socket_ops::connect(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_ = std::move(endpoint);
+            impl->set_endpoint(std::move(endpoint), false);
             return ec;
         }
 
@@ -341,7 +370,7 @@ namespace detail {
             unique_lock l{ *impl };
             if (socket_ops::disconnect(impl->socket_, endpoint, ec))
                 return ec;
-            impl->endpoint_.clear();
+            impl->clear_endpoint();
             return ec;
         }
 
@@ -437,6 +466,12 @@ namespace detail {
         std::string monitor(implementation_type & impl, int events,
                             boost::system::error_code & ec) {
             return socket_ops::monitor(impl->socket_, events, ec);
+        }
+
+        void format(implementation_type const& impl,
+                    std::ostream & stm) {
+            unique_lock l{ *impl };
+            impl->format(stm);
         }
 
     private:
