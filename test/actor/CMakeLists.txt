@@ -1,4 +1,4 @@
-project(test_thread)
+project(test_actor)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
