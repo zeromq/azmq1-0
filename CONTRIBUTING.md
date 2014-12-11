@@ -63,6 +63,9 @@ but should otherwise not commit their own contributions.
 All AUTHORS share in collective ownership of the code, there is no Copyright
 Assignment process.
 
+The library is licensed under the BOOST license, and all contributions must be
+licensable under the terms outlined in the accompanying LICENSE-BOOST_1_0 file.
+
 ### Creating Stable Releases
 
 Make sure your contributions do not include code from projects with incompatible
