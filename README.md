@@ -83,6 +83,10 @@ int main(int argc, char** argv) {
 
 Further examples may be found in doc/examples
 
+## Build status
+
+[AZMQ build status](https://78.46.71.115/project.html?projectId=Azmq)
+
 ## Copying
 
 Use of this software is granted under the the BOOST 1.0 license
