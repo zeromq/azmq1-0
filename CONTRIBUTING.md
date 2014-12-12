@@ -63,9 +63,8 @@ but should otherwise not commit their own contributions.
 All AUTHORS share in collective ownership of the code, there is no Copyright
 Assignment process.
 
-ZeroMQ and it's C4 process strongly favor the GPLv3, however this library exists
-mainly to provide a Boost-consistent interface to ZeroMQ and therefore should be
-usable under under the terms of the accompanying Boost license.
+The library is licensed under the BOOST license, and all contributions must be
+licensable under the terms outlined in the accompanying LICENSE-BOOST_1_0 file.
 
 ### Creating Stable Releases
 

@@ -6,18 +6,17 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <azmq/thread.hpp>
+#include <azmq/actor.hpp>
 #include <azmq/util/scope_guard.hpp>
 
-#define BOOST_ENABLE_ASSERT_HANDLER
-#include <boost/assert.hpp>
 #include <boost/asio/buffer.hpp>
 
 #include <array>
 #include <thread>
 #include <iostream>
 
-#include "../assert.ipp"
+#define CATCH_CONFIG_MAIN
+#include "../catch.hpp"
 
 std::array<boost::asio::const_buffer, 2> snd_bufs = {{
     boost::asio::buffer("A"),
@@ -28,7 +27,7 @@ std::string subj(const char* name) {
     return std::string("inproc://") + name;
 }
 
-void test_send_receive_async_threads() {
+TEST_CASE( "Async Send/Receive", "[actor]" ) {
     boost::system::error_code ecc;
     size_t btc = 0;
 
@@ -44,7 +43,7 @@ void test_send_receive_async_threads() {
         }};
 
         boost::asio::io_service ios;
-        auto s = azmq::thread::fork(ios, [&](azmq::socket & ss) {
+        auto s = azmq::actor::spawn(ios, [&](azmq::socket & ss) {
             ss.async_receive(rcv_bufs, [&](boost::system::error_code const& ec, size_t bytes_transferred) {
                 ecb = ec;
                 btb = bytes_transferred;
@@ -62,21 +61,8 @@ void test_send_receive_async_threads() {
         ios.run();
     }
 
-    BOOST_ASSERT_MSG(!ecc, "!ecc");
-    BOOST_ASSERT_MSG(btc == 4, "btc != 4");
-    BOOST_ASSERT_MSG(!ecb, "!ecb");
-    BOOST_ASSERT_MSG(btb == 4, "btb != 4");
+    REQUIRE(ecc == boost::system::error_code());
+    REQUIRE(btc == 4);
+    REQUIRE(ecb == boost::system::error_code());
+    REQUIRE(btb == 4);
 }
-
-int main(int argc, char **argv) {
-    std::cout << "Testing thread operations...";
-    try {
-        test_send_receive_async_threads();
-    } catch (std::exception const& e) {
-        std::cout << "Failure\n" << e.what() << std::endl;
-        return 1;
-    }
-    std::cout << "Success" << std::endl;
-    return 0;
-}
-

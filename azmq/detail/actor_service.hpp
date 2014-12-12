@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZMQ_DETAIL_THREAD_SERVICE_HPP_
-#define AZMQ_DETAIL_THREAD_SERVICE_HPP_
+#ifndef AZMQ_DETAIL_ACTOR_SERVICE_HPP_
+#define AZMQ_DETAIL_ACTOR_SERVICE_HPP_
 
 #include "../error.hpp"
 #include "../socket.hpp"
@@ -31,23 +31,21 @@
 
 namespace azmq {
 namespace detail {
-    class thread_service
-        : public azmq::detail::service_base<thread_service> {
+    class actor_service
+        : public azmq::detail::service_base<actor_service> {
     public:
-        using group_error_info = boost::error_info<struct tag_group_error_info, std::string>;
-
         inline static std::string get_uri(const char* pfx);
 
-        thread_service(boost::asio::io_service & ios)
-            : azmq::detail::service_base<thread_service>(ios)
+        actor_service(boost::asio::io_service & ios)
+            : azmq::detail::service_base<actor_service>(ios)
         { }
 
         void shutdown_service() override { }
 
-        using is_alive = opt::boolean<static_cast<int>(opt::limits::lib_thread_min)>;
-        using detached = opt::boolean<static_cast<int>(opt::limits::lib_thread_min) + 1>;
-        using start = opt::boolean<static_cast<int>(opt::limits::lib_thread_min) + 2>;
-        using last_error = opt::exception_ptr<static_cast<int>(opt::limits::lib_thread_min) + 3>;
+        using is_alive = opt::boolean<static_cast<int>(opt::limits::lib_actor_min)>;
+        using detached = opt::boolean<static_cast<int>(opt::limits::lib_actor_min) + 1>;
+        using start = opt::boolean<static_cast<int>(opt::limits::lib_actor_min) + 2>;
+        using last_error = opt::exception_ptr<static_cast<int>(opt::limits::lib_actor_min) + 3>;
 
         template<typename T>
         socket make_pipe(bool defer_start, T&& data) {
@@ -256,7 +254,7 @@ namespace detail {
         };
     };
 
-    std::string thread_service::get_uri(const char* pfx) {
+    std::string actor_service::get_uri(const char* pfx) {
         static std::atomic_ulong id{ 0 };
         std::ostringstream stm;
         stm << "inproc://azmq-" << pfx << "-" << id++;
@@ -265,5 +263,5 @@ namespace detail {
 
 } // namespace detail
 } // namespace azmq
-#endif // AZMQ_DETAIL_THREAD_SERVICE_HPP_
+#endif // AZMQ_DETAIL_ACTOR_SERVICE_HPP_
 
