@@ -28,14 +28,12 @@ public:
     receive_buffer_op_base(MutableBufferSequence const& buffers,
                            flags_type flags,
                            complete_func_type complete_func)
-        : reactor_op(select_func(buffers, flags), complete_func)
+        : reactor_op(&receive_buffer_op_base::do_perform, complete_func)
         , buffers_(buffers)
         , flags_(flags)
-        , it_(std::begin(buffers_))
-        , end_(std::end(buffers_))
         { }
 
-    static bool do_perform_receive_more(reactor_op* base, socket_type & socket) {
+    static bool do_perform(reactor_op* base, socket_type & socket) {
         auto o = static_cast<receive_buffer_op_base*>(base);
         o->ec_ = boost::system::error_code();
 
@@ -45,42 +43,14 @@ public:
         return true;
     }
 
-    static bool do_perform(reactor_op* base, socket_type & socket) {
-        auto o = static_cast<receive_buffer_op_base*>(base);
-        o->ec_ = boost::system::error_code();
-
-        o->msg_.rebuild();
-        auto bt = socket_ops::receive(o->msg_, socket, o->flags_ | ZMQ_DONTWAIT, o->ec_);
-        if (o->ec_)
-            return !o->try_again();
-
-        o->msg_.buffer_copy(*(o->it_++));
-        o->bytes_transferred_ += bt;
-        return o->it_ == o->end_;
-    }
-
 protected:
     bool more() const {
         return ec_ == boost::system::errc::no_buffer_space && bytes_transferred_;
     }
 
 private:
-    static perform_func_type select_func(MutableBufferSequence const& buffers,
-                                         socket_ops::flags_type flags) {
-        if (std::distance(std::begin(buffers), std::end(buffers)) == 0)
-            return nullptr;
-
-        return (flags & ZMQ_RCVMORE) ? &receive_buffer_op_base::do_perform_receive_more
-                                     : &receive_buffer_op_base::do_perform;
-    }
-
-    using const_iterator = typename MutableBufferSequence::const_iterator;
-
     MutableBufferSequence buffers_;
     flags_type flags_;
-    const_iterator it_;
-    const_iterator end_;
-    message msg_;
 };
 
 template<typename MutableBufferSequence,
@@ -129,8 +99,9 @@ public:
         auto h = std::move(o->handler_);
         auto ec = o->ec_;
         auto bt = o->bytes_transferred_;
+        auto m = o->more();
         delete o;
-        h(ec, bt);
+        h(ec, std::make_pair(bt, m));
     }
 
 private:

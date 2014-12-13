@@ -417,32 +417,13 @@ namespace detail {
         }
 
         size_t receive_more(implementation_type & impl,
-                       message_vector & vec,
-                       flags_type flags,
-                       boost::system::error_code & ec) {
+                            message_vector & vec,
+                            flags_type flags,
+                            boost::system::error_code & ec) {
             unique_lock l{ *impl };
             if (!is_shutdown(impl, op_type::read_op, ec))
                 return socket_ops::receive_more(vec, impl->socket_, flags, ec);
             return 0;
-        }
-
-        template<typename MutableBufferSequence>
-        more_result_type receive_more(implementation_type & impl,
-                                      MutableBufferSequence const& buffers,
-                                      flags_type flags,
-                                      boost::system::error_code & ec) {
-            unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec)) {
-                bool more = false;
-                auto res = socket_ops::receive(buffers, impl->socket_, flags | ZMQ_RCVMORE, ec);
-                if (ec == boost::system::errc::no_buffer_space && res) {
-                    more = true;
-                    ec = boost::system::error_code();
-                }
-                return std::make_pair(res, more);
-            } else {
-                return std::make_pair(0, false);
-            }
         }
 
         using reactor_op_ptr = std::unique_ptr<reactor_op>;

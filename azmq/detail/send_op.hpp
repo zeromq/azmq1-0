@@ -27,14 +27,12 @@ public:
     send_buffer_op_base(ConstBufferSequence const& buffers,
                         flags_type flags,
                         complete_func_type complete_func)
-        : reactor_op(select_func(buffers, flags), complete_func)
+        : reactor_op(&send_buffer_op_base::do_perform, complete_func)
         , buffers_(buffers)
         , flags_(flags)
-        , it_(std::begin(buffers))
-        , end_(std::end(buffers))
         { }
 
-    static bool do_perform_send_more(reactor_op* base, socket_type & socket) {
+    static bool do_perform(reactor_op* base, socket_type & socket) {
         auto o = static_cast<send_buffer_op_base*>(base);
         o->ec_ = boost::system::error_code();
         o->bytes_transferred_ += socket_ops::send(o->buffers_, socket, o->flags_ | ZMQ_DONTWAIT, o->ec_);
@@ -44,32 +42,9 @@ public:
         return true;
     }
 
-    static bool do_perform(reactor_op* base, socket_type & socket) {
-        auto o = static_cast<send_buffer_op_base*>(base);
-        o->ec_ = boost::system::error_code();
-
-        auto bt = socket_ops::send(*o->it_, socket, o->flags_ | ZMQ_DONTWAIT, o->ec_);
-        if (o->ec_)
-            return !o->try_again();
-        o->bytes_transferred_ += bt;
-        return ++o->it_ == o->end_;
-    }
-
 private:
-    static perform_func_type select_func(ConstBufferSequence const& buffers,
-                                         socket_ops::flags_type flags) {
-        if (!std::distance(std::begin(buffers), std::end(buffers)))
-            return nullptr;
-
-        return (flags & ZMQ_SNDMORE) ? &send_buffer_op_base::do_perform_send_more
-                                     : &send_buffer_op_base::do_perform;
-    }
-
-    using const_iterator = typename ConstBufferSequence::const_iterator;
     ConstBufferSequence const& buffers_;
     flags_type flags_;
-    const_iterator it_;
-    const_iterator end_;
 };
 
 template<typename ConstBufferSequence,

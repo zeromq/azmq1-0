@@ -225,8 +225,8 @@ namespace detail {
             message msg;
             for (auto it = std::begin(buffers); it != std::end(buffers); ++it, ++index) {
                 msg.rebuild(*it);
-                auto f = index == last ? flags & ~ZMQ_SNDMORE
-                                       : flags;
+                auto f = index == last ? flags
+                                       : flags | ZMQ_SNDMORE;
                 res += send(msg, socket, f, ec);
                 if (ec) return 0;
             }
@@ -247,6 +247,21 @@ namespace detail {
             return rc;
         }
 
+        static size_t receive(boost::asio::mutable_buffer const& buffer,
+                              socket_type & socket,
+                              flags_type flags,
+                              boost::system::error_code & ec) {
+            message msg;
+            auto sz = receive(msg, socket, flags, ec);
+            if (ec)
+                return 0;
+            if (msg.buffer_copy(buffer) < sz) {
+                ec = make_error_code(boost::system::errc::no_buffer_space);
+                return 0;
+            }
+            return sz;
+        }
+
         template<typename MutableBufferSequence>
         static size_t receive(MutableBufferSequence const& buffers,
                               socket_type & socket,
@@ -254,24 +269,23 @@ namespace detail {
                               boost::system::error_code & ec) {
             size_t res = 0;
             message msg;
-            flags_type f = flags & ~ZMQ_RCVMORE;
-            for (auto&& buf : buffers) {
-                auto sz = receive(msg, socket, f, ec);
+            auto it = std::begin(buffers);
+            do {
+                auto sz = receive(msg, socket, flags, ec);
                 if (ec)
                     return 0;
 
-                if (msg.buffer_copy(buf) < sz) {
+                if (msg.buffer_copy(*it++) < sz) {
                     ec = make_error_code(boost::system::errc::no_buffer_space);
                     return 0;
                 }
-                res += sz;
-                f = flags;
-            }
 
-            if ((flags & ZMQ_RCVMORE) && msg.more()) {
+                res += sz;
+                flags |= ZMQ_RCVMORE;
+            } while ((it != std::end(buffers)) && msg.more());
+
+            if (msg.more())
                 ec = make_error_code(boost::system::errc::no_buffer_space);
-                return res;
-            }
             return res;
         }
 
@@ -281,13 +295,15 @@ namespace detail {
                                    boost::system::error_code & ec) {
             size_t res = 0;
             message msg;
-            auto more = false;
+            bool more = false;
             do {
-                res += receive(msg, socket, more ? flags | ZMQ_RCVMORE
-                                                 : flags, ec);
-                if (ec) return 0;
+                auto sz = receive(msg, socket, flags, ec);
+                if (ec)
+                    return 0;
                 more = msg.more();
                 vec.emplace_back(std::move(msg));
+                res += sz;
+                flags |= ZMQ_RCVMORE;
             } while (more);
             return res;
         }
