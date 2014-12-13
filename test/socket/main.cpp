@@ -361,7 +361,6 @@ struct monitor_handler {
 
     azmq::socket socket_;
     std::string role_;
-    event_t event_;
     std::vector<event_t> events_;
 
     monitor_handler(boost::asio::io_service & ios, azmq::socket& s, std::string role)
@@ -371,13 +370,14 @@ struct monitor_handler {
 
     void start()
     {
-        socket_.async_receive(boost::asio::buffer(&event_, sizeof(event_t)),
-            [this](boost::system::error_code const& ec, size_t) {
+        socket_.async_receive([this](boost::system::error_code const& ec,
+                                     azmq::message & msg, size_t) {
                 if (ec)
                     return;
-                azmq::message msg;
-                socket_.receive(msg, ZMQ_RCVMORE);
-                events_.push_back(event_);
+                event_t event;
+                msg.buffer_copy(boost::asio::buffer(&event, sizeof(event)));
+                events_.push_back(event);
+                socket_.purge();
                 start();
             });
     }

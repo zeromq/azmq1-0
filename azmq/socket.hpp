@@ -437,12 +437,33 @@ public:
     /** \brief Send some data from the socket
      *  \param msg raw_message to send
      *  \param flags specifying how the send call is to be made
+     *  \return bytes transferred
      */
     std::size_t send(message const& msg,
                      flags_type flags = 0) {
         boost::system::error_code ec;
         auto res = get_service().send(implementation, msg, flags, ec);
-        if (res)
+        if (ec)
+            throw boost::system::error_code(ec);
+        return res;
+    }
+
+    /* \brief Purge remaining message parts from prior receive()
+     * \param ec boost::system::error_code &
+     * \return size_t number of bytes discarded
+     */
+    std::size_t purge(boost::system::error_code & ec) {
+        return get_service().purge(implementation, ec);
+    }
+
+    /* \brief Purge remaining message parts from prior receive()
+     * \return size_t number of bytes discarded
+     * \throw boost::system::system_error
+     */
+    std::size_t purge() {
+        boost::system::error_code ec;
+        auto res = get_service().purge(implementation, ec);
+        if (ec)
             throw boost::system::error_code(ec);
         return res;
     }

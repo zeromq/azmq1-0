@@ -177,6 +177,16 @@ namespace detail {
             return kind;
         }
 
+        static bool get_socket_rcvmore(socket_type & socket) {
+            BOOST_ASSERT_MSG(socket, "invalid socket");
+            int more = 0;
+            size_t size = sizeof(more);
+            auto rc = zmq_getsockopt(socket.get(), ZMQ_RCVMORE, &more, &size);
+            if (rc == 0)
+                return more == 1;
+            return false;
+        }
+
         static size_t send(message const& msg,
                            socket_type & socket,
                            flags_type flags,
@@ -305,6 +315,18 @@ namespace detail {
                 res += sz;
                 flags |= ZMQ_RCVMORE;
             } while (more);
+            return res;
+        }
+
+        static size_t purge(socket_type & socket,
+                            boost::system::error_code & ec) {
+            size_t res = 0;
+            message msg;
+            while (get_socket_rcvmore(socket)) {
+                auto sz = receive(msg, socket, ZMQ_RCVMORE, ec);
+                if (ec)
+                    return 0;
+            };
             return res;
         }
 
