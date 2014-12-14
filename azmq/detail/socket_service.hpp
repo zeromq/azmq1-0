@@ -161,7 +161,7 @@ namespace detail {
                 BOOST_ASSERT_MSG(kind >= 0 && kind <= ZMQ_STREAM, "kind not in [ZMQ_PAIR, ZMQ_STREAM]");
                 stm << "socket[" << kinds[kind] << "]{ ";
                 if (!endpoint_.empty())
-                    stm << (serverish_ ? '0' : '>') << endpoint_ << ' ';
+                    stm << (serverish_ ? '@' : '>') << endpoint_ << ' ';
                 stm << "}";
             }
 
