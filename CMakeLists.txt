@@ -40,6 +40,7 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${ZeroMQ_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR})
 
+enable_testing()
 
 macro(add_catch_test name)
     if (TEST_REPORT_FORMAT)
@@ -49,7 +50,6 @@ macro(add_catch_test name)
     endif()
 endmacro()
 
-include(CTest)
 add_subdirectory(test)
 #add_subdirectory(doc/examples)
 
