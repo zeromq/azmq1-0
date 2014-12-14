@@ -19,6 +19,7 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include <chrono>
 
 #define CATCH_CONFIG_MAIN
 #include "../catch.hpp"
@@ -430,6 +431,7 @@ TEST_CASE( "Socket Monitor", "[socket]" ) {
     client->connect("tcp://127.0.0.1:9998");
 
     bounce(*client, *server);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     ios_m.stop();
     t.join();
