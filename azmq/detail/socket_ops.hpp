@@ -318,7 +318,7 @@ namespace detail {
             return res;
         }
 
-        static size_t purge(socket_type & socket,
+        static size_t flush(socket_type & socket,
                             boost::system::error_code & ec) {
             size_t res = 0;
             message msg;

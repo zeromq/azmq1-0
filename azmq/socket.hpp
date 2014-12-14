@@ -452,17 +452,17 @@ public:
      * \param ec boost::system::error_code &
      * \return size_t number of bytes discarded
      */
-    std::size_t purge(boost::system::error_code & ec) {
-        return get_service().purge(implementation, ec);
+    std::size_t flush(boost::system::error_code & ec) {
+        return get_service().flush(implementation, ec);
     }
 
-    /* \brief Purge remaining message parts from prior receive()
+    /* \brief Flush remaining message parts from prior receive()
      * \return size_t number of bytes discarded
      * \throw boost::system::system_error
      */
-    std::size_t purge() {
+    std::size_t flush() {
         boost::system::error_code ec;
-        auto res = get_service().purge(implementation, ec);
+        auto res = flush(ec);
         if (ec)
             throw boost::system::error_code(ec);
         return res;

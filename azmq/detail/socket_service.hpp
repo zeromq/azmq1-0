@@ -426,11 +426,11 @@ namespace detail {
             return 0;
         }
 
-        size_t purge(implementation_type & impl,
+        size_t flush(implementation_type & impl,
                      boost::system::error_code & ec) {
             unique_lock l{ *impl };
             if (!is_shutdown(impl, op_type::read_op, ec))
-                return socket_ops::purge(impl->socket_, ec);
+                return socket_ops::flush(impl->socket_, ec);
             return 0;
         }
 

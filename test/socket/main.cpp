@@ -377,7 +377,7 @@ struct monitor_handler {
                 event_t event;
                 msg.buffer_copy(boost::asio::buffer(&event, sizeof(event)));
                 events_.push_back(event);
-                socket_.purge();
+                socket_.flush();
                 start();
             });
     }
