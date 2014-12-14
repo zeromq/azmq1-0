@@ -40,7 +40,16 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${ZeroMQ_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR})
 
-include(CTest)
+enable_testing()
+
+macro(add_catch_test name)
+    if (TEST_REPORT_FORMAT)
+        add_test(NAME ${name} COMMAND ${name} -r ${TEST_REPORT_FORMAT} -o "${name}.test_out.xml")
+    else()
+        add_test(NAME ${name} COMMAND ${name})
+    endif()
+endmacro()
+
 add_subdirectory(test)
 #add_subdirectory(doc/examples)
 
