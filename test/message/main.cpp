@@ -43,11 +43,11 @@ void test_message_constructors() {
 void test_message_buffer_operations() {
     azmq::message mm(42);
     // implicit cast to const_buffer
-    boost::asio::const_buffer b = mm;
+    boost::asio::const_buffer b = mm.cbuffer();
     BOOST_ASSERT(boost::asio::buffer_size(b) == mm.size());
 
     // implicit cast to mutable_buffer
-    boost::asio::mutable_buffer bb = mm;
+    boost::asio::mutable_buffer bb = mm.buffer();
     BOOST_ASSERT(boost::asio::buffer_size(bb) == mm.size());
 }
 
@@ -79,7 +79,7 @@ void test_write_through_mutable_buffer() {
     azmq::message m("This is a test");
 
     azmq::message mm(m);
-    boost::asio::mutable_buffer bb = mm;
+    boost::asio::mutable_buffer bb = mm.buffer();
     auto pstr = boost::asio::buffer_cast<char*>(bb);
     pstr[0] = 't';
 

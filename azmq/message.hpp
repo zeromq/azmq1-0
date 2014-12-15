@@ -92,12 +92,17 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
         ~message() { close(); }
 
-        operator boost::asio::const_buffer() const {
+        boost::asio::const_buffer cbuffer() const {
             auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
             return boost::asio::buffer(pv, size());
         }
 
-        operator boost::asio::mutable_buffer() {
+        boost::asio::const_buffer buffer() const {
+            auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
+            return boost::asio::buffer(pv, size());
+        }
+
+        boost::asio::mutable_buffer buffer() {
             if (is_shared())
                 deep_copy();
 
@@ -105,16 +110,13 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             return boost::asio::buffer(pv, size());
         }
 
-        void * data() { return zmq_msg_data(const_cast<zmq_msg_t*>(&msg_)); }
-
         template<typename T>
         T const& buffer_cast() const {
-            auto buf = boost::asio::buffer(*this);
-            return *boost::asio::buffer_cast<T const*>(buf);
+            return *boost::asio::buffer_cast<T const*>(buffer());
         }
 
         size_t buffer_copy(boost::asio::mutable_buffer const& target) const {
-            return boost::asio::buffer_copy(target, boost::asio::buffer(*this));
+            return boost::asio::buffer_copy(target, buffer());
         }
 
         bool operator==(const message & rhs) const {
