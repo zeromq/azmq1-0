@@ -14,6 +14,9 @@
 #include "context_ops.hpp"
 
 #include <boost/assert.hpp>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/socket_base.hpp>
 #if ! defined BOOST_ASIO_WINDOWS
@@ -22,6 +25,8 @@
     #include <boost/asio/ip/tcp.hpp>
 #endif
 #include <boost/system/error_code.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
 
 #include <zmq.h>
 
@@ -43,6 +48,11 @@ namespace detail {
                 BOOST_ASSERT_MSG(rc == 0, "set linger=0 on shutdown");
                 zmq_close(socket);
             }
+        };
+
+        enum class dynamic_port : uint16_t {
+            first = 0xc000,
+            last = 0xffff
         };
 
         using raw_socket_type = void*;
@@ -94,10 +104,48 @@ namespace detail {
         }
 
         static boost::system::error_code bind(socket_type & socket,
-                                              endpoint_type const& ep,
+                                              endpoint_type & ep,
                                               boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(socket, "invalid socket");
-            auto rc = zmq_bind(socket.get(), ep.c_str());
+            const boost::regex simple_tcp("^tcp://.*:(\\d+)$");
+            const boost::regex dynamic_tcp("^(tcp://.*):([*!])(\\[(\\d+)?-(\\d+)?\\])?$");
+            boost::smatch mres;
+            int rc = -1;
+            if (boost::regex_match(ep, mres, simple_tcp)) {
+                if (zmq_bind(socket.get(), ep.c_str()) == 0)
+                    rc = boost::lexical_cast<uint16_t>(mres.str(1));
+            } else if (boost::regex_match(ep, mres, dynamic_tcp)) {
+                auto const& hostname = mres.str(1);
+                auto const& opcode = mres.str(2);
+                auto const& first_str = mres.str(4);
+                auto const& last_str = mres.str(5);
+                auto first = first_str.empty() ? static_cast<uint16_t>(dynamic_port::first)
+                                               : boost::lexical_cast<uint16_t>(first_str);
+                auto last = last_str.empty() ? static_cast<uint16_t>(dynamic_port::last)
+                                             : boost::lexical_cast<uint16_t>(last_str);
+                uint16_t port = first;
+                if (opcode[0] == '!') {
+                    static boost::random::mt19937 gen;
+                    boost::random::uniform_int_distribution<> port_range(port, last);
+                    port = port_range(gen);
+                }
+                auto attempts = last - first;
+                auto fmt = boost::format("%s:%d");
+                while (rc < 0 && attempts--) {
+                    ep = boost::str(fmt % hostname % port);
+                    // NOTE - Possible GCC codegen bug here
+                    //if (zmq_bind(socket.get(), ep.c_str()) == 0)
+                        //rc == port;
+
+                    rc = zmq_bind(socket.get(), ep.c_str());
+                    if (rc == 0)
+                        rc == port;
+                    if (++port > last)
+                        port = first;
+                }
+            } else {
+                rc = zmq_bind(socket.get(), ep.c_str());
+            }
             if (rc < 0)
                 ec = make_error_code();
             return ec;

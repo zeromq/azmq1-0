@@ -338,6 +338,7 @@ namespace detail {
                                        socket_ops::endpoint_type endpoint,
                                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
+            // Note - socket_ops::bind() may modify the local copy of endpoint
             if (socket_ops::bind(impl->socket_, endpoint, ec))
                 return ec;
             impl->set_endpoint(std::move(endpoint), true);

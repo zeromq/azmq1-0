@@ -4,7 +4,8 @@
 #include <boost/asio/buffer.hpp>
 
 #include <array>
-#include <iostream>
+#include <chrono>
+#include <thread>
 
 #define CATCH_CONFIG_MAIN
 #include "../catch.hpp"
@@ -20,16 +21,75 @@ std::string subj(const char* name) {
     return std::string("inproc://") + name;
 }
 
+TEST_CASE( "Tcp Dynamic Binding Expressions", "[socket_ops]" ) {
+    boost::system::error_code ec;
+    auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
+    REQUIRE(ec == boost::system::error_code());
+
+    std::string uri{ "tcp://127.0.0.1:5560" };
+    azmq::detail::socket_ops::bind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    azmq::detail::socket_ops::unbind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    std::string orig_uri{ "tcp://127.0.0.1:*" };
+    uri = orig_uri;
+    azmq::detail::socket_ops::bind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    REQUIRE(uri != orig_uri);
+    azmq::detail::socket_ops::unbind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    orig_uri = { "tcp://127.0.0.1:!" };
+    uri = orig_uri;
+    azmq::detail::socket_ops::bind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    REQUIRE(uri != orig_uri);
+    azmq::detail::socket_ops::unbind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    orig_uri = { "tcp://127.0.0.1:*[60000-]" };
+    uri = orig_uri;
+    azmq::detail::socket_ops::bind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    REQUIRE(uri != orig_uri);
+    azmq::detail::socket_ops::unbind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    orig_uri = { "tcp://127.0.0.1:![-60000]" };
+    uri = orig_uri;
+    azmq::detail::socket_ops::bind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    REQUIRE(uri != orig_uri);
+    azmq::detail::socket_ops::unbind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    orig_uri = { "tcp://127.0.0.1:![55000-55999]" };
+    uri = orig_uri;
+    azmq::detail::socket_ops::bind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    REQUIRE(uri != orig_uri);
+    azmq::detail::socket_ops::unbind(sb, uri, ec);
+    REQUIRE(ec == boost::system::error_code());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
+
 TEST_CASE( "Inproc Send/Receive discrete calls", "[socket_ops]" ) {
     boost::system::error_code ec;
     auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    auto uri = subj(BOOST_CURRENT_FUNCTION);
+    azmq::detail::socket_ops::bind(sb, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     // Send multipart message
@@ -57,12 +117,13 @@ TEST_CASE( "Inproc Send/Receive Buffer Sequence", "[socket_ops]" ) {
     boost::system::error_code ec;
     auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    auto uri = subj(BOOST_CURRENT_FUNCTION);
+    azmq::detail::socket_ops::bind(sb, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     // Send and receive all message parts as a mutable buffer sequence
@@ -89,12 +150,13 @@ TEST_CASE( "Inproc Send/Receive message vector", "[socket_ops]" ) {
     boost::system::error_code ec;
     auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    auto uri = subj(BOOST_CURRENT_FUNCTION);
+    azmq::detail::socket_ops::bind(sb, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     // Send and receive all message parts as a vector
@@ -111,12 +173,13 @@ TEST_CASE( "Inproc Send/Receive not enough buffers", "[socket_ops]" ) {
     boost::system::error_code ec;
     auto sb = azmq::detail::socket_ops::create_socket(ctx, ZMQ_ROUTER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::bind(sb, subj(BOOST_CURRENT_FUNCTION), ec);
+    auto uri = subj(BOOST_CURRENT_FUNCTION);
+    azmq::detail::socket_ops::bind(sb, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     auto sc = azmq::detail::socket_ops::create_socket(ctx, ZMQ_DEALER, ec);
     REQUIRE(ec == boost::system::error_code());
-    azmq::detail::socket_ops::connect(sc, subj(BOOST_CURRENT_FUNCTION), ec);
+    azmq::detail::socket_ops::connect(sc, uri, ec);
     REQUIRE(ec == boost::system::error_code());
 
     // Verify that we get an error on multipart with too few bufs in seq
