@@ -272,21 +272,20 @@ public:
      *  \param flags specifying how the receive call is to be made
      *  \param ec set to indicate what error, if any, occurred
      *  \remark
-     *  If buffers is a sequence of buffers, and flags has ZMQ_RCVMORE
-     *  set, this call will fill the supplied sequence with message
-     *  parts from a multipart message. It is possible that there are
-     *  more message parts than supplied buffers, or that an individual
-     *  message part's size may exceed an individual buffer in the
+     *  If buffers is a sequence of buffers this call will fill the supplied
+     *  sequence with message parts from a multipart message. It is possible
+     *  that there are more message parts than supplied buffers, or that an
+     *  individual message part's size may exceed an individual buffer in the
      *  sequence. In either case, the call will return with ec set to
-     *  no_buffer_space. It is the callers responsibility to issue
-     *  additional receive calls to collect the remaining message parts.
-     *
-     * \remark
-     * If flags does not have ZMQ_RCVMORE set, this call will synchronously
-     * receive a message for each buffer in the supplied sequence
-     * before returning. This will work for multi-part messages as well, but
-     * will not verify that the number of buffers supplied is sufficient to
-     * receive all message parts.
+     *  no_buffer_space. The caller may distinguish between the case where
+     *  there were simply an insufficient number of buffers to collect all
+     *  message parts and the case where an individual buffer was insufficiently
+     *  sized by examining the returned size. In the case where an insufficient
+     *  number of buffers were presented, the size will be the number of bytes
+     *  received so far. In the case where an individual buffer was too small,
+     *  the returned size will be zero. It is the callers responsibility to issue
+     *  additional receive calls to collect the remaining message parts or
+     *  flush to discard them.
      */
     template<typename MutableBufferSequence>
     std::size_t receive(MutableBufferSequence const& buffers,
@@ -301,19 +300,20 @@ public:
      *  \param flags flags specifying how the receive call is to be made
      *  \throw boost::system::system_error
      *  \remark
-     *  If buffers is a sequence of buffers, and flags has ZMQ_RCVMORE
-     *  set, this call will fill the supplied sequence with message
-     *  parts from a multipart message. It is possible that there are
-     *  more message parts than supplied buffers, or that an individual
-     *  message part's size may exceed an individual buffer in the
+     *  If buffers is a sequence of buffers this call will fill the supplied
+     *  sequence with message parts from a multipart message. It is possible
+     *  that there are more message parts than supplied buffers, or that an
+     *  individual message part's size may exceed an individual buffer in the
      *  sequence. In either case, the call will return with ec set to
-     *  no_buffer_space. It is the callers responsibility to issue
-     *  additional receive calls to collect the remaining message parts.
-     *
-     * \remark
-     * If flags does not have ZMQ_RCVMORE set, this call will synchronously
-     * receive a message for each buffer in the supplied sequence
-     * before returning.
+     *  no_buffer_space. The caller may distinguish between the case where
+     *  there were simply an insufficient number of buffers to collect all
+     *  message parts and the case where an individual buffer was insufficiently
+     *  sized by examining the returned size. In the case where an insufficient
+     *  number of buffers were presented, the size will be the number of bytes
+     *  received so far. In the case where an individual buffer was too small,
+     *  the returned size will be zero. It is the callers responsibility to issue
+     *  additional receive calls to collect the remaining message parts or
+     *  flush to discard them.
      */
     template<typename MutableBufferSequence>
     std::size_t receive(const MutableBufferSequence & buffers,
@@ -361,54 +361,11 @@ public:
         return res;
     }
 
-    /** \brief Receive some data as part of a multipart message from the socket
-     *  \tparam MutableBufferSequence
-     *  \param buffers buffer(s) to fill on receive
-     *  \param flags specifying how the receive call is to be made
-     *  \param ec set to indicate what error, if any, occurred
-     *  \return pair<size_t, bool>
-     *  \remark
-     *  Works as for receive() with flags containing ZMQ_RCVMORE but returns
-     *  a pair containing the number of bytes transferred and a boolean flag
-     *  which if true, indicates more message parts are available on the
-     *  socket.
-     */
-    template<typename MutableBufferSequence>
-    more_result_type receive_more(MutableBufferSequence const& buffers,
-                                  flags_type flags,
-                                  boost::system::error_code & ec) {
-        return get_service().receive_more(implementation, buffers, flags, ec);
-    }
-
-    /** \brief Receive some data as part of a multipart message from the socket
-     *  \tparam MutableBufferSequence
-     *  \param buffers buffer(s) to fill on receive
-     *  \param flags specifying how the receive call is to be made
-     *  \return pair<size_t, bool>
-     *  \throw boost::system::system_error
-     *  \remark
-     *  Works as for receive() with flags containing ZMQ_RCVMORE but returns
-     *  a pair containing the number of bytes transferred and a boolean flag
-     *  which if true, indicates more message parts are available on the
-     *  socket.
-     */
-    template<typename MutableBufferSequence>
-    more_result_type receive_more(MutableBufferSequence const& buffers,
-                                  flags_type flags = 0) {
-        boost::system::error_code ec;
-        auto res = receive_more(buffers, flags, ec);
-        if (ec)
-            throw boost::system::system_error(ec);
-        return res;
-    }
-
-    /** \brief Receive remaining parts of a multipart message from the socket
-     *  \param vec messave_vector to fill on receive
+    /** \brief Receive all parts of a multipart message from the socket
+     *  \param vec message_vector to fill on receive
      *  \flags specifying how the receive call is to be made
      *  \param ec set to indicate what error, if any, occurred
      *  \return size_t bytes transferred
-     *  \remark
-     *  Works as for receive() with flags containing ZMQ_RCVMORE
      */
     size_t receive_more(message_vector & vec,
                         flags_type flags,
@@ -416,13 +373,11 @@ public:
         return get_service().receive_more(implementation, vec, flags, ec);
     }
 
-    /** \brief Receive remaining parts of a multipart message from the socket
+    /** \brief Receive all parts of a multipart message from the socket
      *  \param vec messave_vector to fill on receive
      *  \flags specifying how the receive call is to be made
      *  \return size_t bytes transferred
      *  \throw boost::system::system_error
-     *  \remark
-     *  Works as for receive() with flags containing ZMQ_RCVMORE
      */
     size_t receive_more(message_vector & vec,
                         flags_type flags) {
@@ -439,14 +394,8 @@ public:
      *  \param flags specifying how the send call is to be made
      *  \param ec set to indicate what, if any, error occurred
      *  \remark
-     *  If buffers is a sequence of buffers, and flags has ZMQ_SNDMORE
-     *  set, this call will construct a multipart message from the supplied
-     *  buffer sequence.
-     *
-     * \remark
-     * If flags does not have ZMQ_RCVMORE set, this call will synchronously
-     * send an individual message for each buffer in the supplied sequence before
-     * returning.
+     *  If buffers is a sequence of buffers this call will send a multipart
+     *  message from the supplied buffer sequence.
      */
     template<typename ConstBufferSequence>
     std::size_t send(ConstBufferSequence const& buffers,
@@ -461,14 +410,8 @@ public:
      *  \param flags specifying how the send call is to be made
      *  \throw boost::system::system_error
      *  \remark
-     *  If buffers is a sequence of buffers, and flags has ZMQ_SNDMORE
-     *  set, this call will construct a multipart message from the supplied
-     *  buffer sequence.
-     *
-     * \remark
-     * If flags does not have ZMQ_RCVMORE set, this call will synchronously
-     * send a message for each buffer in the supplied sequence before
-     * returning.
+     *  If buffers is a sequence of buffers this call will send a multipart
+     *  message from the supplied buffer sequence.
      */
     template<typename ConstBufferSequence>
     std::size_t send(ConstBufferSequence const& buffers,
@@ -484,9 +427,6 @@ public:
      *  \param msg raw_message to send
      *  \param flags specifying how the send call is to be made
      *  \param ec set to indicate what, if any, error occurred
-     *  \remarks
-     *      This variant provides access to a type that thinly wraps the underlying
-     *      libzmq message type.
      */
     std::size_t send(message const& msg,
                      flags_type flags,
@@ -497,15 +437,33 @@ public:
     /** \brief Send some data from the socket
      *  \param msg raw_message to send
      *  \param flags specifying how the send call is to be made
-     *  \remarks
-     *      This variant provides access to a type that thinly wraps the underlying
-     *      libzmq message type.
+     *  \return bytes transferred
      */
     std::size_t send(message const& msg,
                      flags_type flags = 0) {
         boost::system::error_code ec;
         auto res = get_service().send(implementation, msg, flags, ec);
-        if (res)
+        if (ec)
+            throw boost::system::error_code(ec);
+        return res;
+    }
+
+    /* \brief Purge remaining message parts from prior receive()
+     * \param ec boost::system::error_code &
+     * \return size_t number of bytes discarded
+     */
+    std::size_t flush(boost::system::error_code & ec) {
+        return get_service().flush(implementation, ec);
+    }
+
+    /* \brief Flush remaining message parts from prior receive()
+     * \return size_t number of bytes discarded
+     * \throw boost::system::system_error
+     */
+    std::size_t flush() {
+        boost::system::error_code ec;
+        auto res = flush(ec);
+        if (ec)
             throw boost::system::error_code(ec);
         return res;
     }
@@ -523,17 +481,8 @@ public:
      *  message part's size may exceed an individual buffer in the
      *  sequence. In either case, the handler will be called with ec set
      *  to no_buffer_space. It is the callers responsibility to issue
-     *  additional receive calls to collect the remaining message parts.
-     *  If any message parts remain after the call to the completion
-     *  handler returns, the socket handler will throw an exception to
-     *  the io_service forcing this socket to be removed from the poll
-     *  set. The socket is largely unusable after this, in particular
-     *  any subsequent call to (async_)send/receive will raise an exception.
-     *
-     * \remark
-     *  If flags does not have ZMQ_RCVMORE set, this call will asynchronously
-     *  receive a message for each buffer in the supplied sequence before
-     *  calling the supplied handler.
+     *  additional receive calls to collect the remaining message parts or
+     *  call flush to discard them.
      */
     template<typename MutableBufferSequence,
              typename ReadHandler>
@@ -557,12 +506,12 @@ public:
      *                          more_result result);
      *      }
      *  \remark
-     *  Works as for async_receive() with flags containing ZMQ_RCV_MORE but
-     *  does not error if more parts remain than buffers supplied.  The
-     *  completion handler will be called with a more_result indicating the
-     *  number of bytes transferred thus far, and flag indicating whether
-     *  more message parts remain. The handler may then make synchronous
-     *  receive_more() calls to collect the remaining message parts.
+     *  Works as for async_receive() but does not error if more parts remain
+     *  than buffers supplied.  The completion handler will be called with
+     *  a more_result indicating the number of bytes transferred thus far,
+     *  and flag indicating whether more message parts remain. The handler
+     *  may then make synchronous receive_more() calls to collect the remaining
+     *  message parts.
      */
     template<typename MutableBufferSequence,
              typename ReadMoreHandler>
@@ -607,13 +556,8 @@ public:
      *          WriteHandler concept
      *  \param flags specifying how the send call is to be made
      *  \remark
-     *  If buffers is a sequence of buffers, and flags has ZMQ_SNDMORE
-     *  set, this call will construct a multipart message from the supplied
-     *  buffer sequence.
-     *
-     *  \remark
-     *  If flags does not specify ZMQ_SNDMORE this call will asynchronously
-     *  send each buffer in the sequence as an individual message.
+     *  If buffers is a sequence of buffers, this call will send a multipart
+     *  message from the supplied buffer sequence.
      */
     template<typename ConstBufferSequence,
              typename WriteHandler>
@@ -630,9 +574,6 @@ public:
      *  \param msg message reference
      *  \param handler ReadHandler
      *  \param flags int flags
-     *  \remarks
-     *      This variant provides access to a type that thinly wraps the underlying
-     *      libzmq message type.
      */
     template<typename WriteHandler>
     void async_send(message const& msg,

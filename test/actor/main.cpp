@@ -48,14 +48,14 @@ TEST_CASE( "Async Send/Receive", "[actor]" ) {
                 ecb = ec;
                 btb = bytes_transferred;
                 ios.stop();
-            }, ZMQ_RCVMORE);
+            });
             ss.get_io_service().run();
         });
 
         s.async_send(snd_bufs, [&] (boost::system::error_code const& ec, size_t bytes_transferred) {
             ecc = ec;
             btc = bytes_transferred;
-        }, ZMQ_SNDMORE);
+        });
 
         boost::asio::io_service::work w(ios);
         ios.run();
