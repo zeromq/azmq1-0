@@ -9,13 +9,14 @@
 #include <azmq/socket.hpp>
 #include <azmq/util/scope_guard.hpp>
 
-#define BOOST_ENABLE_ASSERT_HANDLER
-#include <boost/assert.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/asio/buffer.hpp>
 
 #include <array>
 #include <thread>
 #include <iostream>
+#include <string>
 #include <vector>
 #include <cstdint>
 #include <memory>
@@ -453,3 +454,15 @@ TEST_CASE( "Socket Monitor", "[socket]" ) {
     CHECK(server_monitor.events_[2].e == ZMQ_EVENT_CLOSED);
     CHECK(server_monitor.events_[3].e == ZMQ_EVENT_MONITOR_STOPPED);
 }
+
+TEST_CASE( "Attach Method", "[socket]" ) {
+    using namespace boost::algorithm;
+    boost::asio::io_service ios;
+    azmq::dealer_socket s(ios);
+
+    std::vector<std::string> elems;
+
+    azmq::attach(s, split(elems, "@inproc://myendpoint,tcp://127.0.0.1:5556,inproc://others", is_any_of(",")), true);
+    REQUIRE(s.endpoint() == "inproc://others");
+}
+
