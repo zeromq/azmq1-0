@@ -133,13 +133,8 @@ namespace detail {
                 auto fmt = boost::format("%s:%d");
                 while (rc < 0 && attempts--) {
                     ep = boost::str(fmt % hostname % port);
-                    // NOTE - Possible GCC codegen bug here
-                    //if (zmq_bind(socket.get(), ep.c_str()) == 0)
-                        //rc == port;
-
-                    rc = zmq_bind(socket.get(), ep.c_str());
-                    if (rc == 0)
-                        rc == port;
+                    if (zmq_bind(socket.get(), ep.c_str()) == 0)
+                        rc = port;
                     if (++port > last)
                         port = first;
                 }
