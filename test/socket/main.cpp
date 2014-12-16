@@ -342,7 +342,6 @@ TEST_CASE( "Send/Receive message more async", "[socket]" ) {
 }
 
 struct monitor_handler {
-    using ptr = std::shared_ptr<monitor_handler>;
 
 #if defined BOOST_MSVC
 #pragma pack(push, 1)
@@ -431,15 +430,26 @@ TEST_CASE( "Socket Monitor", "[socket]" ) {
     client->connect("tcp://127.0.0.1:9998");
 
     bounce(*client, *server);
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    // On Windows monitored sockets must be closed before their monitors,
+    // otherwise ZMQ crashes or deadlocks during the context termination.
+    // ZMQ's bug?
+    client.reset();
+    server.reset();
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     ios_m.stop();
     t.join();
 
-    REQUIRE(client_monitor.events_.size() == 2);
-    REQUIRE(server_monitor.events_.size() == 2);
-    REQUIRE(client_monitor.events_.at(0).e == ZMQ_EVENT_CONNECT_DELAYED);
-    REQUIRE(client_monitor.events_.at(1).e == ZMQ_EVENT_CONNECTED);
-    REQUIRE(server_monitor.events_.at(0).e == ZMQ_EVENT_LISTENING);
-    REQUIRE(server_monitor.events_.at(1).e == ZMQ_EVENT_ACCEPTED);
+    REQUIRE(client_monitor.events_.size() == 3);
+    CHECK(client_monitor.events_[0].e == ZMQ_EVENT_CONNECT_DELAYED);
+    CHECK(client_monitor.events_[1].e == ZMQ_EVENT_CONNECTED);
+    CHECK(client_monitor.events_[2].e == ZMQ_EVENT_MONITOR_STOPPED);
+
+    REQUIRE(server_monitor.events_.size() == 4);
+    CHECK(server_monitor.events_[0].e == ZMQ_EVENT_LISTENING);
+    CHECK(server_monitor.events_[1].e == ZMQ_EVENT_ACCEPTED);
+    CHECK(server_monitor.events_[2].e == ZMQ_EVENT_CLOSED);
+    CHECK(server_monitor.events_[3].e == ZMQ_EVENT_MONITOR_STOPPED);
 }
