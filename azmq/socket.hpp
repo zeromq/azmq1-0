@@ -130,6 +130,22 @@ public:
      *  \param addr std::string zeromq URI to bind
      *  \param ec error_code to capture error
      *  \see http://api.zeromq.org/4-1:zmq-bind
+     *  \remarks
+     *  For TCP endpoints, supports binding to IANA defined
+     *  ephemeral ports. The default range is 49152-65535.
+     *  To override this range, follow the '*' with "[first-last]".
+     *  To bind to a random port, follow the '!' with "[first-last]".
+     *
+     *  Examples:
+     *  
+     *  tcp://127.0.0.1:*                bind to first free port from 49152 up
+     *  tcp://126.0.0.1:!                bind to random port from 49152 to 65535
+     *  tcp://127.0.0.1:*[60000-]        bind to first free port from 60000 up
+     *  tcp://127.0.0.1:![-60000]        bind to random port from 49152 to 60000
+     *  tcp://127.0.0.1:![55000-55999]   bind to random port from 55000-55999
+     *
+     *  endpoint() will return the actual endpoint bound, not the binding spec
+     *  supplied here.
      */
     boost::system::error_code bind(std::string addr,
                                    boost::system::error_code & ec) {

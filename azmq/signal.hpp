@@ -26,7 +26,7 @@ boost::system::error_code send(socket & s, uint8_t status,
                                boost::system::error_code & ec) {
     uint64_t v = 0x77664433221100u + status;
     auto buf = boost::asio::buffer(&v, sizeof(v));
-    s.send(buf, 0, ec); 
+    s.send(buf, 0, ec);
     return ec;
 }
 
@@ -56,8 +56,7 @@ uint8_t wait(socket & s, boost::system::error_code & ec) {
         if (ec)
             return 0;
         if (sz == sizeof(uint64_t)) {
-            auto pv = msg.data();
-            uint64_t v = *static_cast<uint64_t*>(pv);
+            auto v = msg.buffer_cast<uint64_t>();
             if ((v & 0xffffffffffff00u) == 0x77664433221100u)
                 return v & 255;
         }
