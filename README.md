@@ -64,12 +64,12 @@ namespace asio = boost::asio;
 
 int main(int argc, char** argv) {
     asio::io_service ios;
-    azmq::socket subscriber(ios, ZMQ_SUB);
+    azmq::sub_socket subscriber(ios);
     subscriber.connect("tcp://192.168.55.112:5556");
     subscriber.connect("tcp://192.168.55.201:7721");
     subscriber.set_option(aziomq::socket::subscribe("NASDAQ"));
 
-    azmq::socket publisher(ios, ZMQ_PUB);
+    azmq::pub_socket publisher(ios);
     publisher.bind("ipc://nasdaq-feed");
 
     std::array<char, 256> buf;
