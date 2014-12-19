@@ -30,10 +30,10 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
      *           number of additional args
      *  \returns peer socket
      *
-     *  \remark The newly created actor will run in a std::thread, and will receive
-     *  the 'server' end of the pipe as it's first argument.  The actor will be
-     *  attached to the lifetime of the returned socket and will run until it is
-     *  destroyed.
+     *  \remark The newly created actor will run in a boost::thread, and will
+     *  receive the 'server' end of the pipe as it's first argument.  The actor
+     *  will be attached to the lifetime of the returned socket and will run
+     *  until it is destroyed.
      *
      *  \remark Each actor has an associated io_service and the supplied socket
      *  will be created on this io_service. The actor may access this by calling
@@ -73,6 +73,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                                             std::placeholders::_1,
                                             std::forward<Args>(args)...));
     }
+
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace actor
 } // namespace azmq
