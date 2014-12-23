@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZMQ_THREAD_HPP_
-#define AZMQ_THREAD_HPP_
+#ifndef AZMQ_ACTOR_HPP_
+#define AZMQ_ACTOR_HPP_
 
 #include "socket.hpp"
 #include "detail/actor_service.hpp"
@@ -30,10 +30,10 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
      *           number of additional args
      *  \returns peer socket
      *
-     *  \remark The newly created actor will run in a std::thread, and will receive
-     *  the 'server' end of the pipe as it's first argument.  The actor will be
-     *  attached to the lifetime of the returned socket and will run until it is
-     *  destroyed.
+     *  \remark The newly created actor will run in a boost::thread, and will
+     *  receive the 'server' end of the pipe as it's first argument.  The actor
+     *  will be attached to the lifetime of the returned socket and will run
+     *  until it is destroyed.
      *
      *  \remark Each actor has an associated io_service and the supplied socket
      *  will be created on this io_service. The actor may access this by calling
@@ -73,6 +73,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                                             std::placeholders::_1,
                                             std::forward<Args>(args)...));
     }
+
 AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace actor
 } // namespace azmq

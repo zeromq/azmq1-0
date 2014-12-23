@@ -137,7 +137,7 @@ public:
      *  To bind to a random port, follow the '!' with "[first-last]".
      *
      *  Examples:
-     *  
+     *
      *  tcp://127.0.0.1:*                bind to first free port from 49152 up
      *  tcp://126.0.0.1:!                bind to random port from 49152 to 65535
      *  tcp://127.0.0.1:*[60000-]        bind to first free port from 60000 up
@@ -716,6 +716,109 @@ using push_socket = detail::specialized_socket<ZMQ_PUSH>;
 using pull_socket = detail::specialized_socket<ZMQ_PULL>;
 using stream_socket = detail::specialized_socket<ZMQ_STREAM>;
 AZMQ_V1_INLINE_NAMESPACE_END
+
+/** \brief attach a socket to a range of endpoints
+ *  \tparam Iterator iterator to a sequence of endpoints
+ *  \param s socket& to attach to supplied endpoints
+ *  \param begin of endpoint sequence
+ *  \param end of endpoint sequence
+ *  \param ec boost::system::error_code&
+ *  \param serverish bool (defaults to true) - See remarks
+ *  \return boost::system::error_code
+ *  \remarks
+ *  If each endpoint is prefixed with '@' or '>', then this
+ *  routine will bind or connect the socket (respectively) to
+ *  the endpoint. If the endpoint does not start with '@' or '>'
+ *  then the value of serverish determines whether the socket
+ *  will bound (the default) or connected (serverish == false).
+ */
+template<typename Iterator>
+boost::system::error_code attach(socket & s, Iterator begin, Iterator end,
+                                 boost::system::error_code & ec,
+                                 bool serverish = true) {
+    for (auto it = begin; it != end; ++it) {
+        if (it->empty()) continue;
+        if (it->at(0) == '@') {
+            if (s.bind(it->substr(1), ec))
+                return ec;
+        } else if (it->at(0) == '>') {
+            if (s.connect(it->substr(1), ec))
+                return ec;
+        } else {
+            if (serverish)
+                s.bind(*it, ec);
+            else
+                s.connect(*it, ec);
+            if (ec)
+                return ec;
+        }
+    }
+    return ec;
+}
+
+/** \brief attach a socket to a range of endpoints
+ *  \tparam Iterator iterator to a sequence of endpoints
+ *  \param s socket& to attach to supplied endpoints
+ *  \param begin of endpoint sequence
+ *  \param end of endpoint sequence
+ *  \param serverish bool (defaults to true) - See remarks
+ *  \throw boost::system::system_error
+ *  \remarks
+ *  If each endpoint is prefixed with '@' or '>', then this
+ *  routine will bind or connect the socket (respectively) to
+ *  the endpoint. If the endpoint does not start with '@' or '>'
+ *  then the value of serverish determines whether the socket
+ *  will bound (the default) or connected (serverish == false).
+ */
+template<typename Iterator>
+void attach(socket & s, Iterator begin, Iterator end, bool serverish = true) {
+    boost::system::error_code ec;
+    if (attach(s, begin, end, ec, serverish))
+        throw boost::system::system_error(ec);
+}
+
+/** \brief attach a socket to a range of endpoints
+ *  \tparam Range a type implementing begin() and end()
+ *          for a sequence of endpoints
+ *  \param s socket& to attach to supplied endpoints
+ *  \param r Range of endpoints
+ *  \param ec boost::system::error_code&
+ *  \param serverish bool (defaults to true) - See remarks
+ *  \return boost::system::error_code
+ *  \remarks
+ *  If each endpoint is prefixed with '@' or '>', then this
+ *  routine will bind or connect the socket (respectively) to
+ *  the endpoint. If the endpoint does not start with '@' or '>'
+ *  then the value of serverish determines whether the socket
+ *  will bound (the default) or connected (serverish == false).
+ */
+template<typename Range>
+boost::system::error_code attach(socket & s, Range r,
+                                 boost::system::error_code & ec,
+                                 bool serverish = true) {
+    return attach(s, std::begin(r), std::end(r), ec, serverish);
+}
+
+/** \brief attach a socket to a range of endpoints
+ *  \tparam Range a type implementing begin() and end()
+ *          for a sequence of endpoints
+ *  \param s socket& to attach to supplied endpoints
+ *  \param r Range of endpoints
+ *  \param serverish bool (defaults to true) - See remarks
+ *  \throw boost::system::system_error
+ *  \remarks
+ *  If each endpoint is prefixed with '@' or '>', then this
+ *  routine will bind or connect the socket (respectively) to
+ *  the endpoint. If the endpoint does not start with '@' or '>'
+ *  then the value of serverish determines whether the socket
+ *  will bound (the default) or connected (serverish == false).
+ */
+template<typename Range>
+void attach(socket & s, Range r, bool serverish = true) {
+    boost::system::error_code ec;
+    if (attach(s, std::begin(r), std::end(r), ec, serverish))
+        throw boost::system::system_error(ec);
+}
 
 } // namespace azmq
 #endif // AZMQ_SOCKET_HPP_
