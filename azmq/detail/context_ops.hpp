@@ -32,9 +32,7 @@ namespace detail {
         using ipv6 = opt::boolean<ZMQ_IPV6>;
 
         static context_type ctx_new() {
-            return context_type(zmq_ctx_new(), [](void *p) {
-                zmq_ctx_term(p);
-            });
+            return context_type(zmq_ctx_new(), zmq_ctx_term);
         }
 
         static context_type get_context(bool create_new = false) {
