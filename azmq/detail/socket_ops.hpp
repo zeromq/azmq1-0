@@ -280,21 +280,6 @@ namespace detail {
             return rc;
         }
 
-        static size_t receive(boost::asio::mutable_buffer const& buffer,
-                              socket_type & socket,
-                              flags_type flags,
-                              boost::system::error_code & ec) {
-            message msg;
-            auto sz = receive(msg, socket, flags, ec);
-            if (ec)
-                return 0;
-            if (msg.buffer_copy(buffer) < sz) {
-                ec = make_error_code(boost::system::errc::no_buffer_space);
-                return 0;
-            }
-            return sz;
-        }
-
         template<typename MutableBufferSequence>
         static auto receive(MutableBufferSequence const& buffers,
                             socket_type & socket,
