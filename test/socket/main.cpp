@@ -9,6 +9,7 @@
 #include <azmq/socket.hpp>
 #include <azmq/util/scope_guard.hpp>
 
+#include <boost/utility/string_ref.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/asio/buffer.hpp>
@@ -46,6 +47,26 @@ TEST_CASE( "Set/Get options", "[socket]" ) {
     azmq::socket::rcv_hwm out_hwm;
     s.get_option(out_hwm);
     REQUIRE(in_hwm.value() == out_hwm.value());
+}
+
+TEST_CASE( "Send/Receive single buffer", "[socket]") {
+    boost::asio::io_service ios;
+
+    azmq::socket sb(ios, ZMQ_PAIR);
+    sb.bind(subj(BOOST_CURRENT_FUNCTION));
+
+    azmq::socket sc(ios, ZMQ_PAIR);
+    sc.connect(subj(BOOST_CURRENT_FUNCTION));
+
+    auto msg = "TEST";
+    auto snd_buf = boost::asio::const_buffer(msg, 5);
+    auto sz1 = sc.send(snd_buf);
+
+    std::array<char, 256> buf;
+    auto sz2 = sb.receive(boost::asio::buffer(buf));
+
+    REQUIRE(sz1 == sz2);
+    REQUIRE(boost::string_ref(msg) == boost::string_ref(buf.data()));
 }
 
 TEST_CASE( "Send/Receive synchronous", "[socket]" ) {
