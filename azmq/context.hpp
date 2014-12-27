@@ -6,8 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#ifndef AZMQ_IO_SERVICE_HPP_
-#define AZMQ_IO_SERVICE_HPP_
+#ifndef AZMQ_CONTEXT_HPP_
+#define AZMQ_CONTEXT_HPP_
 
 #include "detail/socket_service.hpp"
 #include "option.hpp"
@@ -17,9 +17,7 @@
 #include <zmq.h>
 
 namespace azmq {
-namespace io_service {
-    using  service_type = detail::socket_service;
-
+AZMQ_V1_INLINE_NAMESPACE_BEGIN
     using io_threads = detail::context_ops::io_threads;
     using max_sockets = detail::context_ops::max_sockets;
     using ipv6 = detail::context_ops::ipv6;
@@ -33,8 +31,7 @@ namespace io_service {
     boost::system::error_code set_option(boost::asio::io_service & io_service,
                                          const Option & option,
                                          boost::system::error_code & ec) {
-
-        return boost::asio::use_service<service_type>(io_service).set_option(option, ec);
+        return boost::asio::use_service<detail::socket_service>(io_service).set_option(option, ec);
     }
 
     /** \brief set options on the zeromq context.
@@ -58,7 +55,7 @@ namespace io_service {
     boost::system::error_code get_option(boost::asio::io_service & io_service,
                                          Option & option,
                                          boost::system::error_code & ec) {
-        return boost::asio::use_service<service_type>(io_service).get_option(option, ec);
+        return boost::asio::use_service<detail::socket_service>(io_service).get_option(option, ec);
     }
 
     /** \brief get option from zeromq context
@@ -72,6 +69,6 @@ namespace io_service {
         if (get_option(io_service, option))
             throw boost::system::system_error(ec);
     }
-} // namespace io_service
+AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace azmq
-#endif // AZMQ_IO_SERVICE_HPP_
+#endif // AZMQ_CONTEXT_HPP_

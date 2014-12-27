@@ -59,9 +59,17 @@ namespace detail {
 
         using raw_socket_type = void*;
         using socket_type = std::unique_ptr<void, socket_close>;
+
 #if ! defined BOOST_ASIO_WINDOWS
+        using posix_sd_type = boost::asio::posix::stream_descriptor;
         using native_handle_type = boost::asio::posix::stream_descriptor::native_handle_type;
-        using stream_descriptor = std::unique_ptr<boost::asio::posix::stream_descriptor>;
+        struct stream_descriptor_close {
+            void operator()(posix_sd_type* sd) {
+                sd->release();
+                delete sd;
+            }
+        };
+        using stream_descriptor = std::unique_ptr<posix_sd_type, stream_descriptor_close>;
 #else
         using native_handle_type = boost::asio::ip::tcp::socket::native_handle_type;
         using stream_descriptor = std::unique_ptr<boost::asio::ip::tcp::socket>;
