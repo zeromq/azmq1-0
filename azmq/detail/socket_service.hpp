@@ -125,8 +125,6 @@ namespace detail {
                 }
             }
 
-            bool is_single_thread() const { return optimize_single_threaded_; }
-
             void set_endpoint(socket_ops::endpoint_type endpoint, bool serverish) {
                 endpoint_ = std::move(endpoint);
                 serverish_ = serverish;
