@@ -28,6 +28,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/range/metafunctions.hpp>
 
 #include <zmq.h>
 
@@ -244,35 +245,13 @@ namespace detail {
             return rc;
         }
 
-        static size_t send(boost::asio::const_buffer const& buf,
-                           socket_type & socket,
-                           flags_type flags,
-                           boost::system::error_code & ec) {
-            BOOST_ASSERT_MSG(socket, "Invalid socket");
-            auto pv = boost::asio::buffer_cast<void const*>(buf);
-            auto len = boost::asio::buffer_size(buf);
-            auto rc = zmq_send_const(socket.get(), const_cast<void*>(pv), len, flags);
-            if (rc < 0) {
-                ec = make_error_code();
-                return 0;
-            }
-            return rc;
-        }
-
-        static size_t send(boost::asio::mutable_buffer const& buf,
-                           socket_type & socket,
-                           flags_type flags,
-                           boost::system::error_code & ec) {
-            auto pv = boost::asio::buffer_cast<void const*>(buf);
-            auto len = boost::asio::buffer_size(buf);
-            return send(message(boost::asio::const_buffer(pv, len)), socket, flags, ec);
-        };
-
         template<typename ConstBufferSequence>
-        static size_t send(ConstBufferSequence const& buffers,
-                           socket_type & socket,
-                           flags_type flags,
-                           boost::system::error_code & ec) {
+        static auto send(ConstBufferSequence const& buffers,
+                         socket_type & socket,
+                         flags_type flags,
+                         boost::system::error_code & ec) ->
+            typename boost::enable_if<boost::has_range_const_iterator<ConstBufferSequence>, size_t>::type
+        {
             size_t res = 0;
             auto last = std::distance(std::begin(buffers), std::end(buffers)) - 1;
             auto index = 0u;
@@ -282,7 +261,7 @@ namespace detail {
                 auto f = index == last ? flags
                                        : flags | ZMQ_SNDMORE;
                 res += send(msg, socket, f, ec);
-                if (ec) return 0;
+                if (ec) return 0u;
             }
             return res;
         }
@@ -317,10 +296,12 @@ namespace detail {
         }
 
         template<typename MutableBufferSequence>
-        static size_t receive(MutableBufferSequence const& buffers,
-                              socket_type & socket,
-                              flags_type flags,
-                              boost::system::error_code & ec) {
+        static auto receive(MutableBufferSequence const& buffers,
+                            socket_type & socket,
+                            flags_type flags,
+                            boost::system::error_code & ec) ->
+            typename boost::enable_if<boost::has_range_const_iterator<MutableBufferSequence>, size_t>::type
+        {
             size_t res = 0;
             message msg;
             auto it = std::begin(buffers);

@@ -54,6 +54,15 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                                      buffer);
         }
 
+        message(boost::asio::mutable_buffer const& buffer) {
+            auto sz = boost::asio::buffer_size(buffer);
+            auto rc = zmq_msg_init_size(&msg_, sz);
+            if (rc)
+                throw boost::system::system_error(make_error_code());
+            boost::asio::buffer_copy(boost::asio::buffer(zmq_msg_data(&msg_), sz),
+                                     buffer);
+        }
+
         explicit message(std::string const& str)
             : message(boost::asio::buffer(str))
         { }
