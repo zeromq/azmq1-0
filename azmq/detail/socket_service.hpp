@@ -83,11 +83,6 @@ namespace detail {
             bool serverish_ = false;
             std::array<op_queue_type, max_ops> op_queue_;
 
-            ~per_descriptor_data() {
-                for (auto& ext : exts_)
-                    ext.second.on_remove();
-            }
-
             void do_open(boost::asio::io_service & ios,
                          context_type & ctx,
                          int type,
@@ -173,7 +168,6 @@ namespace detail {
                 if (optimize_single_threaded_) return;
                 mutex_.unlock();
             }
-
         };
         using unique_lock = boost::unique_lock<per_descriptor_data>;
         using implementation_type = std::shared_ptr<per_descriptor_data>;

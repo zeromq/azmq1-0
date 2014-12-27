@@ -24,6 +24,8 @@ namespace detail {
             : ptr_(new model<T>(std::move(data)))
         { }
 
+        ~socket_ext() { on_remove(); }
+
         // MSVS 2013 can not generate move ctor/assignment
 
         socket_ext(socket_ext&& op): ptr_(std::move(op.ptr_)) { }
@@ -38,20 +40,21 @@ namespace detail {
             ptr_->on_install(ios, socket);
         }
 
-        void on_remove() const {
-            BOOST_ASSERT_MSG(ptr_, "reusing moved instance of socket_ext");
-            ptr_->on_remove();
+        void on_remove() {
+            if (ptr_)
+                ptr_->on_remove();
+            ptr_.reset();
         }
 
         template<typename Option>
         boost::system::error_code set_option(Option const& opt, boost::system::error_code & ec) const {
-            BOOST_ASSERT_MSG(ptr_, "reusing moved instance of socket_ext");
+            BOOST_ASSERT_MSG(ptr_, "reusing (re)moved instance of socket_ext");
             return ptr_->set_option(opt_model<Option>(const_cast<Option&>(opt)), ec);
         }
 
         template<typename Option>
         boost::system::error_code get_option(Option & opt, boost::system::error_code & ec) const {
-            BOOST_ASSERT_MSG(ptr_, "reusing moved instance of socket_ext");
+            BOOST_ASSERT_MSG(ptr_, "reusing (re)moved instance of socket_ext");
             return ptr_->set_option(opt_model<Option>(opt), ec);
         }
 
