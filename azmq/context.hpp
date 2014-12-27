@@ -31,7 +31,6 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
     boost::system::error_code set_option(boost::asio::io_service & io_service,
                                          const Option & option,
                                          boost::system::error_code & ec) {
-
         return boost::asio::use_service<detail::socket_service>(io_service).set_option(option, ec);
     }
 
