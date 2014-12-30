@@ -83,17 +83,6 @@ namespace detail {
             bool serverish_ = false;
             std::array<op_queue_type, max_ops> op_queue_;
 
-            ~per_descriptor_data() {
-#if ! defined BOOST_ASIO_WINDOWS
-                if (sd_)
-                    sd_->release(); // Release file descriptor
-#else
-                sd_.reset();    // Close duplicated socket
-#endif
-                for (auto& ext : exts_)
-                    ext.second.on_remove();
-            }
-
             void do_open(boost::asio::io_service & ios,
                          context_type & ctx,
                          int type,
@@ -136,8 +125,6 @@ namespace detail {
                 }
             }
 
-            bool is_single_thread() const { return optimize_single_threaded_; }
-
             void set_endpoint(socket_ops::endpoint_type endpoint, bool serverish) {
                 endpoint_ = std::move(endpoint);
                 serverish_ = serverish;
@@ -179,7 +166,6 @@ namespace detail {
                 if (optimize_single_threaded_) return;
                 mutex_.unlock();
             }
-
         };
         using unique_lock = boost::unique_lock<per_descriptor_data>;
         using implementation_type = std::shared_ptr<per_descriptor_data>;

@@ -11,7 +11,7 @@
 
 #include "error.hpp"
 #include "option.hpp"
-#include "io_service.hpp"
+#include "context.hpp"
 #include "message.hpp"
 #include "detail/basic_io_object.hpp"
 #include "detail/send_op.hpp"
@@ -31,17 +31,17 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
  *  \remark sockets are movable, but not copyable
  */
 class socket :
-    public azmq::detail::basic_io_object<io_service::service_type> {
+    public azmq::detail::basic_io_object<detail::socket_service> {
 
 public:
-    using native_handle_type = service_type::native_handle_type;
-    using endpoint_type = service_type::endpoint_type;
-    using flags_type = service_type::flags_type;
-    using more_result_type = service_type::more_result_type;
-    using shutdown_type = service_type::shutdown_type;
+    using native_handle_type = detail::socket_service::native_handle_type;
+    using endpoint_type = detail::socket_service::endpoint_type;
+    using flags_type = detail::socket_service::flags_type;
+    using more_result_type = detail::socket_service::more_result_type;
+    using shutdown_type = detail::socket_service::shutdown_type;
 
     // socket options
-    using allow_speculative = service_type::allow_speculative;
+    using allow_speculative = detail::socket_service::allow_speculative;
     using type = opt::integer<ZMQ_TYPE>;
     using rcv_more = opt::integer<ZMQ_RCVMORE>;
     using rcv_hwm = opt::integer<ZMQ_RCVHWM>;
@@ -103,14 +103,14 @@ public:
     explicit socket(boost::asio::io_service& ios,
                     int type,
                     bool optimize_single_threaded = false)
-            : azmq::detail::basic_io_object<io_service::service_type>(ios) {
+            : azmq::detail::basic_io_object<detail::socket_service>(ios) {
         boost::system::error_code ec;
         if (get_service().do_open(implementation, type, optimize_single_threaded, ec))
             throw boost::system::system_error(ec);
     }
 
     socket(socket&& other)
-        : azmq::detail::basic_io_object<io_service::service_type>(other.get_io_service()) {
+        : azmq::detail::basic_io_object<detail::socket_service>(other.get_io_service()) {
         get_service().move_construct(implementation,
                                      other.get_service(),
                                      other.implementation);
@@ -506,7 +506,7 @@ public:
                        ReadHandler handler,
                        flags_type flags = 0) {
         using type = detail::receive_buffer_op<MutableBufferSequence, ReadHandler>;
-        get_service().enqueue<type>(implementation, service_type::op_type::read_op,
+        get_service().enqueue<type>(implementation, detail::socket_service::op_type::read_op,
                                     buffers, std::forward<ReadHandler>(handler), flags);
     }
 
@@ -535,7 +535,7 @@ public:
                             ReadMoreHandler handler,
                             flags_type flags = 0) {
         using type = detail::receive_more_buffer_op<MutableBufferSequence, ReadMoreHandler>;
-        get_service().enqueue<type>(implementation, service_type::op_type::read_op,
+        get_service().enqueue<type>(implementation, detail::socket_service::op_type::read_op,
                                     buffers, std::forward<ReadMoreHandler>(handler), flags);
     }
 
@@ -561,7 +561,7 @@ public:
     void async_receive(MessageReadHandler handler,
                        flags_type flags = 0) {
         using type = detail::receive_op<MessageReadHandler>;
-        get_service().enqueue<type>(implementation, service_type::op_type::read_op,
+        get_service().enqueue<type>(implementation, detail::socket_service::op_type::read_op,
                                     std::forward<MessageReadHandler>(handler), flags);
     }
 
@@ -581,7 +581,7 @@ public:
                     WriteHandler handler,
                     flags_type flags = 0) {
         using type = detail::send_buffer_op<ConstBufferSequence, WriteHandler>;
-        get_service().enqueue<type>(implementation, service_type::op_type::write_op,
+        get_service().enqueue<type>(implementation, detail::socket_service::op_type::write_op,
                                     buffers, std::forward<WriteHandler>(handler), flags);
     }
 
@@ -596,7 +596,7 @@ public:
                     WriteHandler handler,
                     flags_type flags = 0) {
         using type = detail::send_op<WriteHandler>;
-        get_service().enqueue<type>(implementation, service_type::op_type::write_op,
+        get_service().enqueue<type>(implementation, detail::socket_service::op_type::write_op,
                                     msg, std::forward<WriteHandler>(handler), flags);
     }
 
@@ -715,7 +715,6 @@ using xsub_socket = detail::specialized_socket<ZMQ_XSUB>;
 using push_socket = detail::specialized_socket<ZMQ_PUSH>;
 using pull_socket = detail::specialized_socket<ZMQ_PULL>;
 using stream_socket = detail::specialized_socket<ZMQ_STREAM>;
-AZMQ_V1_INLINE_NAMESPACE_END
 
 /** \brief attach a socket to a range of endpoints
  *  \tparam Iterator iterator to a sequence of endpoints
@@ -819,7 +818,7 @@ void attach(socket & s, Range r, bool serverish = true) {
     if (attach(s, std::begin(r), std::end(r), ec, serverish))
         throw boost::system::system_error(ec);
 }
-
+AZMQ_V1_INLINE_NAMESPACE_END
 } // namespace azmq
 #endif // AZMQ_SOCKET_HPP_
 
