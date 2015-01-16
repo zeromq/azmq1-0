@@ -266,7 +266,8 @@ namespace detail {
             switch (option.name()) {
             case allow_speculative::static_name::value :
                     ec = boost::system::error_code();
-                    impl->allow_speculative_ = option.value_ ? true : false;
+                    impl->allow_speculative_ = option.data() ? *static_cast<bool const*>(option.data())
+                                                             : false;
                 break;
             default:
                 for (auto& ext : impl->exts_) {
@@ -288,8 +289,12 @@ namespace detail {
             unique_lock l{ *impl };
             switch (option.name()) {
             case allow_speculative::static_name::value :
-                    ec = boost::system::error_code();
-                    option.value_ = impl->allow_speculative_;
+                    if (option.size() < sizeof(bool)) {
+                        ec = make_error_code(boost::system::errc::invalid_argument);
+                    } else {
+                        ec = boost::system::error_code();
+                        *static_cast<bool*>(option.data()) = impl->allow_speculative_;
+                    }
                 break;
             default:
                 for (auto& ext : impl->exts_) {

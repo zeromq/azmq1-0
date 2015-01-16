@@ -88,16 +88,28 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
     struct binary {
         using static_name = std::integral_constant<int, N>;
         using value_t = void*;
+        std::vector<char> data_;
         void* pv_;
         size_t size_;
 
         binary() : pv_(nullptr), size_(0) { }
         binary(void* pv, size_t size) : pv_(pv), size_(size) { }
+        binary(std::string const& str)
+            : data_(std::begin(str), std::end(str))
+            , pv_(data_.data())
+            , size_(data_.size())
+        { }
+
+        binary(void const* pv, size_t size)
+            : data_(static_cast<char const*>(pv), static_cast<char const*>(pv) + size)
+            , pv_(data_.data())
+            , size_(size)
+        { }
 
         int name() const { return N; }
-        const void* data() const { pv_; }
+        const void* data() const { return pv_; }
         void* data() { return pv_; }
-        size_t size() const { size_; }
+        size_t size() const { return size_; }
     };
 
     template<int N>
