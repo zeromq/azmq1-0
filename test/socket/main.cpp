@@ -47,6 +47,13 @@ TEST_CASE( "Set/Get options", "[socket]" ) {
     azmq::socket::rcv_hwm out_hwm;
     s.get_option(out_hwm);
     REQUIRE(in_hwm.value() == out_hwm.value());
+
+    azmq::socket::allow_speculative in_speculative(false);
+    s.set_option(in_speculative);
+
+    azmq::socket::allow_speculative out_speculative;
+    s.get_option(out_speculative);
+    REQUIRE(in_speculative.value() == out_speculative.value());
 }
 
 TEST_CASE( "Send/Receive single buffer", "[socket]") {
