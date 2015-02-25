@@ -494,3 +494,21 @@ TEST_CASE( "Attach Method", "[socket]" ) {
     REQUIRE(s.endpoint() == "inproc://others");
 }
 
+TEST_CASE( "Pub/Sub", "[socket]" ) {
+    boost::asio::io_service ios;
+    azmq::sub_socket subscriber(ios);
+    subscriber.connect("tcp://127.0.0.1:5556");
+    subscriber.set_option(azmq::socket::subscribe("FOO"));
+
+    azmq::pub_socket publisher(ios);
+    publisher.bind("tcp://127.0.0.1:5556");
+
+    publisher.send(boost::asio::buffer(std::string("FOOBAR")));
+
+    std::cout << "Testing pub/sub" << std::endl;
+    std::array<char, 256> buf;
+    auto size = subscriber.receive(boost::asio::buffer(buf));
+
+    REQUIRE(size == 6);
+}
+
