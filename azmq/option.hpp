@@ -81,7 +81,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
         void* data() { return reinterpret_cast<void*>(&value_); }
         size_t size() const { return sizeof(int); }
 
-        bool value() const { return value_; }
+        bool value() const { return 0 != value_; }
     };
 
     template<int N>
