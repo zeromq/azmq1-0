@@ -51,7 +51,7 @@ macro(add_catch_test name)
 endmacro()
 
 add_subdirectory(test)
-#add_subdirectory(doc/examples)
+add_subdirectory(doc)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/azmq
         DESTINATION include)
