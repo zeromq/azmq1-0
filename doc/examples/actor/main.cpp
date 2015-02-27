@@ -41,8 +41,8 @@ private:
     // for such a simple example, this is overkill, but is a useful pattern for 
     // real servers that need to maintain state
     struct impl {
-        std::atomic_ulong pings_;
-        std::atomic_ulong pongs_;
+        std::atomic<unsigned long> pings_;
+        std::atomic<unsigned long> pongs_;
         std::array<char, 256> buf_;
 
         impl()
