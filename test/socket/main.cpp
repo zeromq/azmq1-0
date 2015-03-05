@@ -512,3 +512,58 @@ TEST_CASE( "Pub/Sub", "[socket]" ) {
     REQUIRE(size == 6);
 }
 
+struct state {
+    size_t max;
+    size_t ct;
+    std::array<char, 5> ident;
+    std::array<char, 256> buf;
+    boost::system::error_code ec;
+
+    state(size_t m) : max(m), ct(0) { }
+
+    static void run(state & s, azmq::socket & sb) {
+        std::array<boost::asio::mutable_buffer, 2> rcv_bufs = {{
+            boost::asio::buffer(s.ident),
+            boost::asio::buffer(s.buf)
+        }};
+
+        sb.async_receive(rcv_bufs, [&] (boost::system::error_code const& ec, size_t) {
+            if (ec) {
+                s.ec = ec;
+                sb.get_io_service().stop();
+                return;
+            }
+
+            if (++s.ct >= s.max)
+                sb.get_io_service().stop();
+            run(s, sb);
+        });
+    }
+};
+
+TEST_CASE( "Loopback", "[socket]" ) {
+    boost::asio::io_service ios_b;
+    boost::asio::io_service ios_c;
+
+    azmq::socket sb(ios_b, ZMQ_ROUTER);
+    sb.bind("tcp://127.0.0.1:5560");
+
+    azmq::socket sc(ios_c, ZMQ_DEALER);
+    sc.connect("tcp://127.0.0.1:5560");
+
+    size_t ct = 100000;
+    state s(ct);
+    std::thread t([&] {
+        state::run(s, sb);
+        ios_b.run();
+    });
+
+    for (auto i = 0u; i < ct; ++i) {
+        sc.send(boost::asio::buffer(&i, sizeof(i)));
+    }
+
+    t.join();
+
+    REQUIRE(s.ec == boost::system::error_code());
+    REQUIRE(s.ct == ct);
+}
