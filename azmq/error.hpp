@@ -8,19 +8,11 @@
 */
 #ifndef AZMQ_ERROR_HPP_
 #define AZMQ_ERROR_HPP_
+#include "detail/config.hpp"
 
 #include <boost/system/error_code.hpp>
 #include <zmq.h>
 #include <string>
-
-#if !defined BOOST_NO_CXX11_INLINE_NAMESPACES
-    #define AZMQ_V1_INLINE_NAMESPACE_BEGIN inline namespace v1 {
-    #define AZMQ_V1_INLINE_NAMESPACE_END }
-#else
-    #define AZMQ_V1_INLINE_NAMESPACE_BEGIN
-    #define AZMQ_V1_INLINE_NAMESPACE_END
-#endif
-
 
 namespace azmq {
 AZMQ_V1_INLINE_NAMESPACE_BEGIN
