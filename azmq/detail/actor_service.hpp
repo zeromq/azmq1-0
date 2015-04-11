@@ -14,17 +14,18 @@
 #include "../option.hpp"
 #include "service_base.hpp"
 #include "socket_service.hpp"
+#include "config/thread.hpp"
+#include "config/mutex.hpp"
+#include "config/unique_lock.hpp"
+#include "config/condition_variable.hpp"
 
 #include <boost/assert.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/container/flat_map.hpp>
-#include <boost/thread/thread.hpp>
 
 #include <string>
 #include <vector>
 #include <memory>
-#include <mutex>
-#include <condition_variable>
 #include <atomic>
 #include <sstream>
 #include <exception>
@@ -67,11 +68,11 @@ namespace detail {
             boost::asio::io_service io_service_;
             boost::asio::signal_set signals_;
             pair_socket socket_;
-            boost::thread thread_;
+            thread_t thread_;
 
-            using lock_type = std::unique_lock<std::mutex>;
+            using lock_type = unique_lock_t<mutex_t>;
             mutable lock_type::mutex_type mutex_;
-            mutable std::condition_variable cv_;
+            mutable condition_variable_t cv_;
             bool ready_;
             bool stopped_;
             std::exception_ptr last_error_;
@@ -146,7 +147,7 @@ namespace detail {
                     p->io_service_.stop();
                 });
                 p->stopped_ = false;
-                p->thread_ = boost::thread([p] {
+                p->thread_ = thread_t([p] {
                     p->ready();
                     try {
                         p->run();

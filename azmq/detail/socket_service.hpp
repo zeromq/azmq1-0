@@ -12,6 +12,9 @@
 #include "../message.hpp"
 #include "../option.hpp"
 #include "../util/scope_guard.hpp"
+#include "config/mutex.hpp"
+#include "config/lock_guard.hpp"
+
 #include "basic_io_object.hpp"
 #include "service_base.hpp"
 #include "context_ops.hpp"
