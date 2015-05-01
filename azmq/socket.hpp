@@ -586,9 +586,9 @@ public:
     }
 
     /** \brief Initate an async send operation
-     *  \tparam WriteHandler must conform to the asio ReadHandler concept
+     *  \tparam WriteHandler must conform to the asio WriteHandler concept
      *  \param msg message reference
-     *  \param handler ReadHandler
+     *  \param handler WriteHandler
      *  \param flags int flags
      */
     template<typename WriteHandler>
