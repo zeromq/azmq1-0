@@ -586,9 +586,9 @@ public:
     }
 
     /** \brief Initate an async send operation
-     *  \tparam WriteHandler must conform to the asio ReadHandler concept
+     *  \tparam WriteHandler must conform to the asio WriteHandler concept
      *  \param msg message reference
-     *  \param handler ReadHandler
+     *  \param handler WriteHandler
      *  \param flags int flags
      */
     template<typename WriteHandler>
@@ -632,7 +632,6 @@ public:
     }
 
     /** \brief monitor events on a socket
-        *  \tparam Handler handler function which conforms to the SocketMonitorHandler concept
         *  \param ios io_service on which to bind the returned monitor socket
         *  \param events int mask of events to publish to returned socket
         *  \param ec error_code to set on error
@@ -652,10 +651,8 @@ public:
     }
 
     /** \brief monitor events on a socket
-        *  \tparam Handler handler function which conforms to the SocketMonitorHandler concept
         *  \param ios io_service on which to bind the returned monitor socket
         *  \param events int mask of events to publish to returned socket
-        *  \param ec error_code to set on error
         *  \returns socket
     **/
     socket monitor(boost::asio::io_service & ios,
