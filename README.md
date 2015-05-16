@@ -55,7 +55,7 @@ To change where the build looks for Boost and ZeroMQ use `-DBOOST_ROOT=<my custo
 This is an azmq version of the code presented in the ZeroMQ guide at
 http://zeromq.org/intro:read-the-manual
 
-```
+```cpp
 #include <azmq/socket.hpp>
 #include <boost/asio.hpp>
 #include <array>
