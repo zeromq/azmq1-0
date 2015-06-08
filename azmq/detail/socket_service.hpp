@@ -376,13 +376,11 @@ namespace detail {
                     flags_type flags,
                     boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::write_op, ec))
-            {
-                auto r = socket_ops::send(buffers, impl->socket_, flags, ec);
-                check_missed_events(impl);
-                return r;
-            }
-            return 0;
+            if (is_shutdown(impl, op_type::write_op, ec))
+                return 0;
+            auto r = socket_ops::send(buffers, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t send(implementation_type & impl,
@@ -390,13 +388,11 @@ namespace detail {
                     flags_type flags,
                     boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::write_op, ec))
-            {
-                auto r = socket_ops::send(msg, impl->socket_, flags, ec);
-                check_missed_events(impl);
-                return r;
-            }
-            return 0;
+            if (is_shutdown(impl, op_type::write_op, ec))
+                return 0;
+            auto r = socket_ops::send(msg, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         template<typename MutableBufferSequence>
@@ -405,13 +401,11 @@ namespace detail {
                        flags_type flags,
                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-            {
-                auto r = socket_ops::receive(buffers, impl->socket_, flags, ec);
-                check_missed_events(impl);
-                return r;
-            }
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::receive(buffers, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t receive(implementation_type & impl,
@@ -419,13 +413,11 @@ namespace detail {
                        flags_type flags,
                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-            {
-                auto r = socket_ops::receive(msg, impl->socket_, flags, ec);
-                check_missed_events(impl);
-                return r;
-            }
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::receive(msg, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t receive_more(implementation_type & impl,
@@ -433,25 +425,21 @@ namespace detail {
                             flags_type flags,
                             boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-            {
-                auto r = socket_ops::receive_more(vec, impl->socket_, flags, ec);
-                check_missed_events(impl);
-                return r;
-            }
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::receive_more(vec, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t flush(implementation_type & impl,
                      boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-            {
-                auto r = socket_ops::flush(impl->socket_, ec);
-                check_missed_events(impl);
-                return r;
-            }
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::flush(impl->socket_, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         using reactor_op_ptr = std::unique_ptr<reactor_op>;
