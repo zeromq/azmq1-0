@@ -79,6 +79,7 @@ namespace detail {
             mutable boost::mutex mutex_;
             bool in_speculative_completion_ = false;
             bool scheduled_ = false;
+            bool missed_events_found_ = false;
             bool allow_speculative_ = true;
             shutdown_type shutdown_ = shutdown_type::none;
             exts_type exts_;
@@ -375,9 +376,11 @@ namespace detail {
                     flags_type flags,
                     boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::write_op, ec))
-                return socket_ops::send(buffers, impl->socket_, flags, ec);
-            return 0;
+            if (is_shutdown(impl, op_type::write_op, ec))
+                return 0;
+            auto r = socket_ops::send(buffers, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t send(implementation_type & impl,
@@ -385,9 +388,11 @@ namespace detail {
                     flags_type flags,
                     boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::write_op, ec))
-                return socket_ops::send(msg, impl->socket_, flags, ec);
-            return 0;
+            if (is_shutdown(impl, op_type::write_op, ec))
+                return 0;
+            auto r = socket_ops::send(msg, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         template<typename MutableBufferSequence>
@@ -396,9 +401,11 @@ namespace detail {
                        flags_type flags,
                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-                return socket_ops::receive(buffers, impl->socket_, flags, ec);
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::receive(buffers, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t receive(implementation_type & impl,
@@ -406,9 +413,11 @@ namespace detail {
                        flags_type flags,
                        boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-                return socket_ops::receive(msg, impl->socket_, flags, ec);
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::receive(msg, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t receive_more(implementation_type & impl,
@@ -416,17 +425,21 @@ namespace detail {
                             flags_type flags,
                             boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-                return socket_ops::receive_more(vec, impl->socket_, flags, ec);
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::receive_more(vec, impl->socket_, flags, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         size_t flush(implementation_type & impl,
                      boost::system::error_code & ec) {
             unique_lock l{ *impl };
-            if (!is_shutdown(impl, op_type::read_op, ec))
-                return socket_ops::flush(impl->socket_, ec);
-            return 0;
+            if (is_shutdown(impl, op_type::read_op, ec))
+                return 0;
+            auto r = socket_ops::flush(impl->socket_, ec);
+            check_missed_events(impl);
+            return r;
         }
 
         using reactor_op_ptr = std::unique_ptr<reactor_op>;
@@ -483,6 +496,48 @@ namespace detail {
         }
 
         using weak_descriptor_ptr = std::weak_ptr<per_descriptor_data>;
+
+        static void handle_missed_events(const weak_descriptor_ptr& weak_impl, boost::system::error_code const& e) {
+            auto impl = weak_impl.lock();
+            if (!impl)
+                return;
+
+            boost::system::error_code ec{ e };
+            op_queue_type ops;
+            {
+                unique_lock l{ *impl };
+
+                impl->missed_events_found_ = false;
+                int evs = 0;
+
+                if (!ec)
+                    evs = socket_ops::get_events(impl->socket_, ec);
+
+                if (!ec)
+                    impl->perform_ops(evs, ops);
+                else
+                    impl->cancel_ops(ec, ops);
+            }
+            while (!ops.empty())
+                ops.pop_front_and_dispose(reactor_op::do_complete);
+        }
+
+        void check_missed_events(implementation_type & impl)
+        {
+            if (!impl->scheduled_ || impl->missed_events_found_)
+                return;
+
+            boost::system::error_code ec;
+            auto evs = socket_ops::get_events(impl->socket_, ec);
+
+            if (evs || ec)
+            {
+                impl->missed_events_found_ = true;
+                weak_descriptor_ptr weak_impl(impl);
+                impl->sd_->get_io_service().post([weak_impl, ec]() { handle_missed_events(weak_impl, ec); });
+            }
+        }
+
         struct descriptor_map {
             ~descriptor_map() {
                 lock_type l{ mutex_ };
@@ -539,7 +594,7 @@ namespace detail {
                         p->cancel_ops(ec, ops);
 
                     if (p->scheduled_)
-                        schedule(descriptors_, p, true);
+                        p->sd_->async_read_some(boost::asio::null_buffers(), *this);
                     else
                         descriptors_.unregister_descriptor(p);
                 }
@@ -547,13 +602,14 @@ namespace detail {
                     ops.pop_front_and_dispose(reactor_op::do_complete);
             }
 
-            static void schedule(descriptor_map & descriptors, implementation_type & impl, bool reschedule = false) {
+            static void schedule(descriptor_map & descriptors, implementation_type & impl) {
                 reactor_handler handler(descriptors, impl);
-                if (!reschedule)
-                    descriptors.register_descriptor(impl);
+                descriptors.register_descriptor(impl);
+
                 int evs = 0;
                 boost::system::error_code ec;
                 evs = socket_ops::get_events(impl->socket_, ec);
+
                 if (evs || ec) {
                     impl->sd_->get_io_service().post([handler, ec] { handler(ec, 0); });
                 } else {
@@ -610,7 +666,6 @@ namespace detail {
 
             if (!impl->scheduled_) {
                 impl->scheduled_ = true;
-                l.unlock();
                 reactor_handler::schedule(descriptors_, impl);
             }
             return ec;
