@@ -51,7 +51,6 @@ if (ZeroMQ_INCLUDE_DIRS)
     if (NOT ${CMAKE_CXX_PLATFORM_ID} STREQUAL "Windows")
         find_library(ZeroMQ_LIBRARIES NAMES zmq HINTS ${_ZeroMQ_ROOT}/lib)
     else()
-
         find_library(
             ZeroMQ_LIBRARY_RELEASE
             NAMES
@@ -69,11 +68,9 @@ if (ZeroMQ_INCLUDE_DIRS)
             HINTS
                 ${_ZeroMQ_ROOT}/lib)
 
-        if (ZeroMQ_LIBRARY_DEBUG)
-            set(ZeroMQ_LIBRARIES optimized "${ZeroMQ_LIBRARY_RELEASE}" debug "${ZeroMQ_LIBRARY_DEBUG}")
-        else()
-            set(ZeroMQ_LIBRARIES "${ZeroMQ_LIBRARY_RELEASE}")
-        endif()
+        # On Windows we have to use corresponding version (i.e. Release or Debug) of ZeroMQ because of `errno` CRT global variable
+        # See more at http://www.drdobbs.com/avoiding-the-visual-c-runtime-library/184416623
+        set(ZeroMQ_LIBRARIES optimized "${ZeroMQ_LIBRARY_RELEASE}" debug "${ZeroMQ_LIBRARY_DEBUG}")
     endif()
 endif()
 
