@@ -497,7 +497,7 @@ namespace detail {
 
         using weak_descriptor_ptr = std::weak_ptr<per_descriptor_data>;
 
-        static void handle_missed_events(const weak_descriptor_ptr& weak_impl, boost::system::error_code const& e) {
+        static void handle_missed_events(weak_descriptor_ptr const& weak_impl, boost::system::error_code const& e) {
             auto impl = weak_impl.lock();
             if (!impl)
                 return;
