@@ -78,8 +78,8 @@ namespace detail {
             std::exception_ptr last_error_;
 
             concept()
-                : socket_(io_service_)
-                , signals_(io_service_, SIGINT, SIGTERM)
+                : signals_(io_service_, SIGINT, SIGTERM)
+                , socket_(io_service_)
                 , ready_(false)
                 , stopped_(true)
             {
