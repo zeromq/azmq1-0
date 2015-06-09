@@ -122,7 +122,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
         exception_ptr(std::exception_ptr p) : p_(p) { }
 
         int name() const { return N; }
-        const void* data() const { &p_; }
+        const void* data() const { return &p_; }
         void* data() { return &p_; }
         size_t size() const { return sizeof(p_); }
 
