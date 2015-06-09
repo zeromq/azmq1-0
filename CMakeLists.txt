@@ -24,6 +24,8 @@ if (ZMQ_STATIC)
     add_definitions(-D ZMQ_STATIC)
 endif()
 
+set(ADDITIONAL_LIBS "")
+
 if(USE_LIBCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++abi")
@@ -31,7 +33,7 @@ if(USE_LIBCXX)
     set(ADDITIONAL_LIBS "pthread")
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/config")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/config")
 
 find_package(Boost 1.54 COMPONENTS system log unit_test_framework date_time thread chrono regex random REQUIRED)
 find_package(ZeroMQ 4.0 REQUIRED)
@@ -39,6 +41,9 @@ find_package(ZeroMQ 4.0 REQUIRED)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 
+if (NOT CMAKE_THREAD_LIBS_INIT)
+    set(CMAKE_THREAD_LIBS_INIT "")
+endif()
 
 include_directories(${Boost_INCLUDE_DIRS}
                     ${ZeroMQ_INCLUDE_DIRS}
