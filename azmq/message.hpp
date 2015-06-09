@@ -36,7 +36,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
         message() BOOST_NOEXCEPT_OR_NOTHROW {
             auto rc = zmq_msg_init(&msg_);
-            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero");
+            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero"); (void)rc;
         }
 
         explicit message(size_t size) {
@@ -71,13 +71,13 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             : msg_(rhs.msg_)
         {
             auto rc = zmq_msg_init(&rhs.msg_);
-            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero");
+            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero"); (void)rc;
         }
 
         message& operator=(message && rhs) BOOST_NOEXCEPT_OR_NOTHROW {
             msg_ = rhs.msg_;
             auto rc = zmq_msg_init(&rhs.msg_);
-            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero");
+            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero"); (void)rc;
 
             return *this;
         }
