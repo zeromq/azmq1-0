@@ -344,6 +344,7 @@ namespace detail {
                 auto sz = receive(msg, socket, ZMQ_RCVMORE, ec);
                 if (ec)
                     return 0;
+                res += sz;
             };
             return res;
         }
