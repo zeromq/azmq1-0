@@ -105,7 +105,7 @@ namespace detail {
             bool perform_ops(int evs, op_queue_type & ops) {
                 bool res  = false;
                 int filter[max_ops] = { ZMQ_POLLIN, ZMQ_POLLOUT };
-                for (auto i = 0; i < max_ops; ++i) {
+                for (size_t i = 0; i != max_ops; ++i) {
                     if ((evs & filter[i]) && !op_queue_[i].empty()) {
                         if (op_queue_[i].front().do_perform(socket_)) {
                             op_queue_[i].pop_front_and_dispose([&ops](reactor_op * op) {
@@ -119,7 +119,7 @@ namespace detail {
             }
 
             void cancel_ops(boost::system::error_code const& ec, op_queue_type & ops) {
-                for (auto i = 0; i < max_ops; ++i) {
+                for (size_t i = 0; i != max_ops; ++i) {
                     while (!op_queue_[i].empty()) {
                         op_queue_[i].front().ec_ = make_error_code(boost::system::errc::operation_canceled);
                         op_queue_[i].pop_front_and_dispose([&ops](reactor_op * op) {
@@ -543,7 +543,6 @@ namespace detail {
                 lock_type l{ mutex_ };
                 for(auto&& descriptor : map_)
                     if (auto impl = descriptor.second.lock()) {
-                        auto handle = impl->sd_->native_handle();
                         cancel_ops(impl);
                     }
             }

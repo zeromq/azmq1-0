@@ -47,7 +47,7 @@ namespace detail {
             void operator()(void* socket) {
                 int v = 0;
                 auto rc = zmq_setsockopt(socket, ZMQ_LINGER, &v, sizeof(int));
-                BOOST_ASSERT_MSG(rc == 0, "set linger=0 on shutdown");
+                BOOST_ASSERT_MSG(rc == 0, "set linger=0 on shutdown"); (void)rc;
                 zmq_close(socket);
             }
         };
