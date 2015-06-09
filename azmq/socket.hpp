@@ -503,7 +503,7 @@ public:
     template<typename MutableBufferSequence,
              typename ReadHandler>
     void async_receive(MutableBufferSequence const& buffers,
-                       ReadHandler handler,
+                       ReadHandler && handler,
                        flags_type flags = 0) {
         using type = detail::receive_buffer_op<MutableBufferSequence, ReadHandler>;
         get_service().enqueue<type>(implementation, detail::socket_service::op_type::read_op,
@@ -532,7 +532,7 @@ public:
     template<typename MutableBufferSequence,
              typename ReadMoreHandler>
     void async_receive_more(MutableBufferSequence const& buffers,
-                            ReadMoreHandler handler,
+                            ReadMoreHandler && handler,
                             flags_type flags = 0) {
         using type = detail::receive_more_buffer_op<MutableBufferSequence, ReadMoreHandler>;
         get_service().enqueue<type>(implementation, detail::socket_service::op_type::read_op,
@@ -558,7 +558,7 @@ public:
      *  the message.
      */
     template<typename MessageReadHandler>
-    void async_receive(MessageReadHandler handler,
+    void async_receive(MessageReadHandler && handler,
                        flags_type flags = 0) {
         using type = detail::receive_op<MessageReadHandler>;
         get_service().enqueue<type>(implementation, detail::socket_service::op_type::read_op,
@@ -578,7 +578,7 @@ public:
     template<typename ConstBufferSequence,
              typename WriteHandler>
     void async_send(ConstBufferSequence const& buffers,
-                    WriteHandler handler,
+                    WriteHandler && handler,
                     flags_type flags = 0) {
         using type = detail::send_buffer_op<ConstBufferSequence, WriteHandler>;
         get_service().enqueue<type>(implementation, detail::socket_service::op_type::write_op,
@@ -593,7 +593,7 @@ public:
      */
     template<typename WriteHandler>
     void async_send(message const& msg,
-                    WriteHandler handler,
+                    WriteHandler && handler,
                     flags_type flags = 0) {
         using type = detail::send_op<WriteHandler>;
         get_service().enqueue<type>(implementation, detail::socket_service::op_type::write_op,
