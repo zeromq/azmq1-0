@@ -571,7 +571,7 @@ namespace detail {
             weak_descriptor_ptr per_descriptor_data_;
 
             reactor_handler(descriptor_map & descriptors,
-                            implementation_type per_descriptor_data)
+                            implementation_type const& per_descriptor_data)
                 : descriptors_(descriptors)
                 , per_descriptor_data_(per_descriptor_data)
             { }
@@ -619,10 +619,10 @@ namespace detail {
         };
 
         struct deferred_completion {
-            std::weak_ptr<per_descriptor_data> owner_;
+            weak_descriptor_ptr owner_;
             reactor_op *op_;
 
-            deferred_completion(implementation_type owner,
+            deferred_completion(implementation_type const& owner,
                                 reactor_op_ptr op)
                 : owner_(owner)
                 , op_(op.release())
