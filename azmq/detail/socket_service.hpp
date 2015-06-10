@@ -666,6 +666,8 @@ namespace detail {
             if (!impl->scheduled_) {
                 impl->scheduled_ = true;
                 reactor_handler::schedule(descriptors_, impl);
+            } else {
+                check_missed_events(impl);
             }
             return ec;
         }
