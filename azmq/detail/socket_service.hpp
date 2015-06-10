@@ -102,6 +102,17 @@ namespace detail {
                 optimize_single_threaded_ = optimize_single_threaded;
             }
 
+            int events_mask() const
+            {
+                int res = 0;
+                const int mask[max_ops] = { ZMQ_POLLIN, ZMQ_POLLOUT };
+                for (size_t i = 0; i != max_ops; ++i) {
+                    if (!op_queue_[i].empty())
+                        res |= mask[i];
+                }
+                return res;
+            }
+
             bool perform_ops(int evs, op_queue_type & ops) {
                 bool res  = false;
                 int filter[max_ops] = { ZMQ_POLLIN, ZMQ_POLLOUT };
@@ -528,7 +539,7 @@ namespace detail {
                 return;
 
             boost::system::error_code ec;
-            auto evs = socket_ops::get_events(impl->socket_, ec);
+            auto evs = socket_ops::get_events(impl->socket_, ec) & impl->events_mask();
 
             if (evs || ec)
             {
@@ -605,9 +616,8 @@ namespace detail {
                 reactor_handler handler(descriptors, impl);
                 descriptors.register_descriptor(impl);
 
-                int evs = 0;
                 boost::system::error_code ec;
-                evs = socket_ops::get_events(impl->socket_, ec);
+                auto evs = socket_ops::get_events(impl->socket_, ec) & impl->events_mask();
 
                 if (evs || ec) {
                     impl->sd_->get_io_service().post([handler, ec] { handler(ec, 0); });
