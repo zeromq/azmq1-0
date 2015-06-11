@@ -519,15 +519,22 @@ namespace detail {
                 unique_lock l{ *impl };
 
                 impl->missed_events_found_ = false;
-                int evs = 0;
 
-                if (!ec)
-                    evs = socket_ops::get_events(impl->socket_, ec);
+                for (;;) {
+                    int evs = 0;
 
-                if (!ec)
-                    impl->perform_ops(evs, ops);
-                else
-                    impl->cancel_ops(ec, ops);
+                    if (!ec)
+                        evs = socket_ops::get_events(impl->socket_, ec) & impl->events_mask();
+
+                    if (ec)
+                    {
+                        impl->cancel_ops(ec, ops);
+                        break;
+                    }
+
+                    if (!evs || !impl->perform_ops(evs, ops))
+                        break; // no events we are interesting in or all the ops processed
+                }
             }
             while (!ops.empty())
                 ops.pop_front_and_dispose(reactor_op::do_complete);
@@ -592,17 +599,28 @@ namespace detail {
                 op_queue_type ops;
                 if(auto p = per_descriptor_data_.lock()) {
                     unique_lock l{ *p };
-                    p->scheduled_ = false;
-                    int evs = 0;
 
-                    if (!ec)
-                        evs = socket_ops::get_events(p->socket_, ec);
+                    for (;;) {
+                        int evs = 0;
 
-                    if (!ec)
+                        if (!ec)
+                            evs = socket_ops::get_events(p->socket_, ec) & p->events_mask();
+
+                        if (ec)
+                        {
+                            p->scheduled_ = false;
+                            p->cancel_ops(ec, ops);
+                            break;
+                        }
+
+                        // We have to execure perform_ops regardless evs
+                        // to detect that no operation is scheduled
                         p->scheduled_ = p->perform_ops(evs, ops);
-                    else
-                        p->cancel_ops(ec, ops);
 
+                        if (!p->scheduled_ || !evs)
+                            break;  // all the ops processed or no processing was done because
+                                    // there is no events we are interested in
+                    }
                     if (p->scheduled_)
                         p->sd_->async_read_some(boost::asio::null_buffers(), *this);
                     else
