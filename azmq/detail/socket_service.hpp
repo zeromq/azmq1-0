@@ -595,9 +595,13 @@ namespace detail {
             { }
 
             void operator()(boost::system::error_code const& e, size_t) const {
+                auto p = per_descriptor_data_.lock();
+                if (!p)
+                    return;
+
                 boost::system::error_code ec{ e };
                 op_queue_type ops;
-                if(auto p = per_descriptor_data_.lock()) {
+                {
                     unique_lock l{ *p };
 
                     for (;;) {
