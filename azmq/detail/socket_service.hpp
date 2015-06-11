@@ -508,21 +508,19 @@ namespace detail {
 
         using weak_descriptor_ptr = std::weak_ptr<per_descriptor_data>;
 
-        static void handle_missed_events(weak_descriptor_ptr const& weak_impl, boost::system::error_code const& e) {
+        static void handle_missed_events(weak_descriptor_ptr const& weak_impl, boost::system::error_code ec) {
             auto impl = weak_impl.lock();
             if (!impl)
                 return;
 
-            boost::system::error_code ec{ e };
             op_queue_type ops;
             {
                 unique_lock l{ *impl };
 
                 impl->missed_events_found_ = false;
+                int evs = 0;
 
-                for (;;) {
-                    int evs = 0;
-
+                do {
                     if (!ec)
                         evs = socket_ops::get_events(impl->socket_, ec) & impl->events_mask();
 
@@ -531,10 +529,7 @@ namespace detail {
                         impl->cancel_ops(ec, ops);
                         break;
                     }
-
-                    if (!evs || !impl->perform_ops(evs, ops))
-                        break; // no events we are interesting in or all the ops processed
-                }
+                } while (evs && impl->perform_ops(evs, ops));
             }
             while (!ops.empty())
                 ops.pop_front_and_dispose(reactor_op::do_complete);
@@ -594,19 +589,17 @@ namespace detail {
                 , per_descriptor_data_(per_descriptor_data)
             { }
 
-            void operator()(boost::system::error_code const& e, size_t) const {
+            void operator()(boost::system::error_code ec, size_t) const {
                 auto p = per_descriptor_data_.lock();
                 if (!p)
                     return;
 
-                boost::system::error_code ec{ e };
                 op_queue_type ops;
                 {
                     unique_lock l{ *p };
+                    int evs = 0;
 
-                    for (;;) {
-                        int evs = 0;
-
+                    do {
                         if (!ec)
                             evs = socket_ops::get_events(p->socket_, ec) & p->events_mask();
 
@@ -617,14 +610,13 @@ namespace detail {
                             break;
                         }
 
-                        // We have to execure perform_ops regardless evs
-                        // to detect that no operation is scheduled
+                        // We have to execure perform_ops regardless `evs`
+                        // to detect that there is no operation scheduled.
+                        // In case `evs` is 0, perform_ops doesn't call zmq_send/zmq_receive
+                        // so there is no chance for ZMQ_EVENTS to change.
                         p->scheduled_ = p->perform_ops(evs, ops);
+                    } while (p->scheduled_ && evs);
 
-                        if (!p->scheduled_ || !evs)
-                            break;  // all the ops processed or no processing was done because
-                                    // there is no events we are interested in
-                    }
                     if (p->scheduled_)
                         p->sd_->async_read_some(boost::asio::null_buffers(), *this);
                     else
