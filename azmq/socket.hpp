@@ -82,6 +82,7 @@ public:
     using curve_server = opt::boolean<ZMQ_CURVE_SERVER>;
     using curve_publickey = opt::binary<ZMQ_CURVE_PUBLICKEY>;
     using curve_privatekey = opt::binary<ZMQ_CURVE_SECRETKEY>;
+    using curve_serverkey = opt::binary<ZMQ_CURVE_SERVERKEY>;
     using zap_domain = opt::binary<ZMQ_ZAP_DOMAIN>;
     using conflate = opt::boolean<ZMQ_CONFLATE>;
 
