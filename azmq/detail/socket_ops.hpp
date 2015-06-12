@@ -214,8 +214,10 @@ namespace detail {
             int evs = 0;
             size_t size = sizeof(evs);
             auto rc = zmq_getsockopt(socket.get(), ZMQ_EVENTS, &evs, &size);
-            if (rc < 0)
+            if (rc < 0) {
                 ec = make_error_code();
+                return 0;
+            }
             return evs;
         }
 
