@@ -31,10 +31,7 @@ public:
         op->complete_func_(op, op->ec_, op->bytes_transferred_);
     }
 
-    static boost::system::error_code canceled() {
-        static boost::system::error_code ec = make_error_code(boost::system::errc::operation_canceled);
-        return ec;
-    }
+    static boost::system::error_code canceled() { return boost::asio::error::operation_aborted; }
 
 protected:
     typedef bool (*perform_func_type)(reactor_op*, socket_type &);
@@ -47,7 +44,7 @@ protected:
         return ec_.value() == boost::system::errc::resource_unavailable_try_again;
     }
 
-    bool is_canceled() const { return ec_.value() == boost::system::errc::operation_canceled; }
+    bool is_canceled() const { return ec_ == canceled(); }
 
     reactor_op(perform_func_type perform_func,
                complete_func_type complete_func)
