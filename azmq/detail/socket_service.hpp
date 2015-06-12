@@ -104,29 +104,26 @@ namespace detail {
 
             int events_mask() const
             {
-                int res = 0;
-                const int mask[max_ops] = { ZMQ_POLLIN, ZMQ_POLLOUT };
-                for (size_t i = 0; i != max_ops; ++i) {
-                    if (!op_queue_[i].empty())
-                        res |= mask[i];
-                }
-                return res;
+                static_assert(2 == max_ops, "2 == max_ops");
+                return (!op_queue_[read_op].empty() ? ZMQ_POLLIN : 0)
+                     | (!op_queue_[write_op].empty() ? ZMQ_POLLOUT : 0);
             }
 
-            bool perform_ops(int evs, op_queue_type & ops) {
-                bool res  = false;
-                int filter[max_ops] = { ZMQ_POLLIN, ZMQ_POLLOUT };
-                for (size_t i = 0; i != max_ops; ++i) {
-                    if ((evs & filter[i]) && !op_queue_[i].empty()) {
-                        if (op_queue_[i].front().do_perform(socket_)) {
+            bool perform_ops(op_queue_type & ops, boost::system::error_code& ec) {
+                while (int evs = socket_ops::get_events(socket_, ec) & events_mask()) {
+                    static_assert(2 == max_ops, "2 == max_ops");
+                    const int filter[max_ops] = { ZMQ_POLLIN, ZMQ_POLLOUT };
+
+                    for (size_t i = 0; i != max_ops; ++i) {
+                        if ((evs & filter[i]) && op_queue_[i].front().do_perform(socket_)) {
                             op_queue_[i].pop_front_and_dispose([&ops](reactor_op * op) {
                                 ops.push_back(*op);
                             });
                         }
                     }
-                    res |= !op_queue_[i].empty();
                 }
-                return res;
+
+                return 0 != events_mask(); // true if more operations scheduled
             }
 
             void cancel_ops(boost::system::error_code const& ec, op_queue_type & ops) {
@@ -518,18 +515,11 @@ namespace detail {
                 unique_lock l{ *impl };
 
                 impl->missed_events_found_ = false;
-                int evs = 0;
 
-                do {
-                    if (!ec)
-                        evs = socket_ops::get_events(impl->socket_, ec) & impl->events_mask();
-
-                    if (ec)
-                    {
-                        impl->cancel_ops(ec, ops);
-                        break;
-                    }
-                } while (evs && impl->perform_ops(evs, ops));
+                if (!ec)
+                    impl->perform_ops(ops, ec);
+                if (ec)
+                    impl->cancel_ops(ec, ops);
             }
             while (!ops.empty())
                 ops.pop_front_and_dispose(reactor_op::do_complete);
@@ -597,25 +587,13 @@ namespace detail {
                 op_queue_type ops;
                 {
                     unique_lock l{ *p };
-                    int evs = 0;
 
-                    do {
-                        if (!ec)
-                            evs = socket_ops::get_events(p->socket_, ec) & p->events_mask();
-
-                        if (ec)
-                        {
-                            p->scheduled_ = false;
-                            p->cancel_ops(ec, ops);
-                            break;
-                        }
-
-                        // We have to execure perform_ops regardless `evs`
-                        // to detect that there is no operation scheduled.
-                        // In case `evs` is 0, perform_ops doesn't call zmq_send/zmq_receive
-                        // so there is no chance for ZMQ_EVENTS to change.
-                        p->scheduled_ = p->perform_ops(evs, ops);
-                    } while (p->scheduled_ && evs);
+                    if (!ec)
+                        p->scheduled_ = p->perform_ops(ops, ec);
+                    if (ec) {
+                        p->scheduled_ = false;
+                        p->cancel_ops(ec, ops);
+                    }
 
                     if (p->scheduled_)
                         p->sd_->async_read_some(boost::asio::null_buffers(), *this);
