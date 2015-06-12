@@ -129,7 +129,7 @@ namespace detail {
             void cancel_ops(boost::system::error_code const& ec, op_queue_type & ops) {
                 for (size_t i = 0; i != max_ops; ++i) {
                     while (!op_queue_[i].empty()) {
-                        op_queue_[i].front().ec_ = make_error_code(boost::system::errc::operation_canceled);
+                        op_queue_[i].front().ec_ = ec;
                         op_queue_[i].pop_front_and_dispose([&ops](reactor_op * op) {
                             ops.push_back(*op);
                         });
