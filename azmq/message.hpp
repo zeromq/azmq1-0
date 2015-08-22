@@ -45,6 +45,16 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                 throw boost::system::system_error(make_error_code());
         }
 
+        explicit message(void* buf, size_t size, zmq_free_fn* ffn, void* hint) {
+            auto rc = zmq_msg_init_data(&msg_, buf, size, ffn, hint);
+            if (rc)
+                throw boost::system::system_error(make_error_code());
+        }
+
+        explicit message(void* buf, size_t size)
+                : message(buf, size, nullptr, nullptr)
+        { }
+
         message(boost::asio::const_buffer const& buffer) {
             auto sz = boost::asio::buffer_size(buffer);
             auto rc = zmq_msg_init_size(&msg_, sz);
