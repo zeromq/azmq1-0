@@ -621,10 +621,21 @@ public:
     }
 
     /** \brief Cancel all outstanding asynchronous operations
+     *  \param ec set to indicate what, if any, error occurred
+     */
+    boost::system::error_code cancel(boost::system::error_code & ec) {
+        return get_service().cancel(implementation, ec);
+    }
+
+    /** \brief Cancel all outstanding asynchronous operations
+     *  \throw boost::system::system_error
      */
     void cancel() {
-        get_service().cancel(implementation);
+        boost::system::error_code ec;
+        if (get_service().cancel(implementation, ec))
+            throw boost::system::system_error(ec);
     }
+
     /** \brief Allows access to the underlying ZeroMQ socket
      *  \remark With great power, comes great responsibility
      */
