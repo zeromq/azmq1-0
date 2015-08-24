@@ -113,6 +113,12 @@ namespace detail {
             return res;
         }
 
+        static boost::system::error_code cancel_stream_descriptor(stream_descriptor & sd,
+                                                                  boost::system::error_code & ec) {
+            BOOST_ASSERT_MSG(sd, "invalid stream_descriptor");
+            return sd->cancel(ec);
+        }
+
         static boost::system::error_code bind(socket_type & socket,
                                               endpoint_type & ep,
                                               boost::system::error_code & ec) {

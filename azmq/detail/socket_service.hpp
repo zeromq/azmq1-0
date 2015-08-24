@@ -126,6 +126,10 @@ namespace detail {
                 return 0 != events_mask(); // true if more operations scheduled
             }
 
+            boost::system::error_code cancel_stream_descriptor(boost::system::error_code & ec) {
+                return socket_ops::cancel_stream_descriptor(sd_, ec);
+            }
+
             void cancel_ops(boost::system::error_code const& ec, op_queue_type & ops) {
                 for (size_t i = 0; i != max_ops; ++i) {
                     while (!op_queue_[i].empty()) {
@@ -462,10 +466,12 @@ namespace detail {
             }
         }
 
-        void cancel(implementation_type & impl) {
+        boost::system::error_code cancel(implementation_type & impl,
+                                         boost::system::error_code & ec) {
             unique_lock l{ *impl };
             descriptors_.unregister_descriptor(impl);
             cancel_ops(impl);
+            return impl->cancel_stream_descriptor(ec);
         }
 
         std::string monitor(implementation_type & impl, int events,
@@ -498,7 +504,6 @@ namespace detail {
         static void cancel_ops(implementation_type & impl) {
             op_queue_type ops;
             impl->cancel_ops(reactor_op::canceled(), ops);
-
             while (!ops.empty())
                 ops.pop_front_and_dispose(reactor_op::do_complete);
         }
