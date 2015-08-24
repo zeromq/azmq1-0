@@ -24,6 +24,7 @@
 #include <vector>
 #include <ostream>
 #include <cstring>
+#include <functional>
 
 namespace azmq {
 namespace detail {
@@ -71,10 +72,12 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                                      buffer);
         }
 
-        message(boost::asio::mutable_buffer const& buffer, zmq_free_fn* ffn, void* hint) {
+        template<typename Deleter>
+        message(boost::asio::mutable_buffer const& buffer, Deleter&& deleter)
+            : deleter_(std::forward<Deleter>(deleter)) {
             auto buf = boost::asio::buffer_cast<void*>(buffer);
             auto sz = boost::asio::buffer_size(buffer);
-            auto rc = zmq_msg_init_data(&msg_, buf, sz, ffn, hint);
+            auto rc = zmq_msg_init_data(&msg_, buf, sz, message::zcp_freefn, static_cast<void*>(this));
             if (rc)
                 throw boost::system::system_error(make_error_code());
         }
@@ -202,6 +205,15 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
     private:
         friend detail::socket_ops;
         zmq_msg_t msg_;
+
+        using deleter_t = std::function<void(void*)>;
+        deleter_t deleter_;
+
+        static void zcp_freefn(void *pv, void *hint) {
+            auto pthis = reinterpret_cast<message*>(hint);
+            BOOST_ASSERT_MSG(pthis->deleter_, "!deleter");
+            pthis->deleter_(pv);
+        }
 
         void close() {
             auto rc = zmq_msg_close(&msg_);
