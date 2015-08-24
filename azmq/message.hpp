@@ -45,16 +45,6 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                 throw boost::system::system_error(make_error_code());
         }
 
-        explicit message(void* buf, size_t size, zmq_free_fn* ffn, void* hint) {
-            auto rc = zmq_msg_init_data(&msg_, buf, size, ffn, hint);
-            if (rc)
-                throw boost::system::system_error(make_error_code());
-        }
-
-        explicit message(void* buf, size_t size)
-                : message(buf, size, nullptr, nullptr)
-        { }
-
         message(boost::asio::const_buffer const& buffer) {
             auto sz = boost::asio::buffer_size(buffer);
             auto rc = zmq_msg_init_size(&msg_, sz);
@@ -64,6 +54,14 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                                      buffer);
         }
 
+        message(boost::asio::const_buffer const& buffer, zmq_free_fn* ffn, void* hint) {
+            auto buf = boost::asio::buffer_cast<const void*>(buffer);
+            auto sz = boost::asio::buffer_size(buffer);
+            auto rc = zmq_msg_init_data(&msg_, (void*) buf, sz, ffn, hint);
+            if (rc)
+                throw boost::system::system_error(make_error_code());
+        }
+
         message(boost::asio::mutable_buffer const& buffer) {
             auto sz = boost::asio::buffer_size(buffer);
             auto rc = zmq_msg_init_size(&msg_, sz);
@@ -71,6 +69,14 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
                 throw boost::system::system_error(make_error_code());
             boost::asio::buffer_copy(boost::asio::buffer(zmq_msg_data(&msg_), sz),
                                      buffer);
+        }
+
+        message(boost::asio::mutable_buffer const& buffer, zmq_free_fn* ffn, void* hint) {
+            auto buf = boost::asio::buffer_cast<void*>(buffer);
+            auto sz = boost::asio::buffer_size(buffer);
+            auto rc = zmq_msg_init_data(&msg_, buf, sz, ffn, hint);
+            if (rc)
+                throw boost::system::system_error(make_error_code());
         }
 
         explicit message(std::string const& str)
