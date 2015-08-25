@@ -6,11 +6,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <iostream>
 #include <azmq/message.hpp>
 
-#define BOOST_ENABLE_ASSERT_HANDLER
-#include <boost/assert.hpp>
 #include <boost/asio/buffer.hpp>
 
 #include <string>
@@ -18,64 +15,68 @@
 #include <array>
 #include <iterator>
 
-#include "../assert.ipp"
+#define CATCH_CONFIG_MAIN
+#include "../catch.hpp"
 
-void test_message_constructors() {
+
+TEST_CASE( "message_constructors", "[message]" ) {
     // default init range has 0 size
     azmq::message m;
-    BOOST_ASSERT(m.size() == 0);
+    REQUIRE(m.size() == 0);
 
     // pre-sized message construction
     azmq::message mm(42);
-    BOOST_ASSERT(mm.size() == 42);
+    REQUIRE(mm.size() == 42);
 
     // implicit construction from asio::const_buffer
     std::string s("This is a test");
     azmq::message mstr(boost::asio::buffer(s));
-    BOOST_ASSERT(s.size() == mstr.size());
-    BOOST_ASSERT(s ==  mstr.string());
+    REQUIRE(s.size() == mstr.size());
+    REQUIRE(s ==  mstr.string());
 
     // construction from string
     azmq::message mmstr(s);
-    BOOST_ASSERT(s == mmstr.string());
+    REQUIRE(s == mmstr.string());
 }
 
-void test_message_buffer_operations() {
+TEST_CASE( "message_buffer_operations", "[message]" ) {
     azmq::message mm(42);
     // implicit cast to const_buffer
     boost::asio::const_buffer b = mm.cbuffer();
-    BOOST_ASSERT(boost::asio::buffer_size(b) == mm.size());
+    REQUIRE(boost::asio::buffer_size(b) == mm.size());
 
     // implicit cast to mutable_buffer
     boost::asio::mutable_buffer bb = mm.buffer();
-    BOOST_ASSERT(boost::asio::buffer_size(bb) == mm.size());
+    REQUIRE(boost::asio::buffer_size(bb) == mm.size());
 }
 
-void test_message_copy_operations() {
+TEST_CASE( "message_copy_operations", "[message]" ) {
     azmq::message m(42);
     azmq::message mm(m);
-    BOOST_ASSERT(m.size() == mm.size() && mm.size() == 42);
+    REQUIRE(m.size() == 42);
+    REQUIRE(mm.size() == 42);
 
     azmq::message mmm = m;
-    BOOST_ASSERT(m.size() == mmm.size() && mmm.size() == 42);
+    REQUIRE(m.size() == 42);
+    REQUIRE(mmm.size() == 42);
 }
 
-void test_message_move_operations() {
+TEST_CASE( "message_move_operations", "[message]" ) {
     azmq::message m;
     azmq::message mm(42);
 
     // move assignment
     m = std::move(mm);
-    BOOST_ASSERT(m.size() == 42);
-    BOOST_ASSERT(mm.size() == 0);
+    REQUIRE(m.size() == 42);
+    REQUIRE(mm.size() == 0);
 
     // move construction
     azmq::message mmm(std::move(m));
-    BOOST_ASSERT(m.size() == 0);
-    BOOST_ASSERT(mmm.size() == 42);
+    REQUIRE(m.size() == 0);
+    REQUIRE(mmm.size() == 42);
 }
 
-void test_write_through_mutable_buffer() {
+TEST_CASE( "write_through_mutable_buffer", "[message]" ) {
     azmq::message m("This is a test");
 
     azmq::message mm(m);
@@ -84,13 +85,13 @@ void test_write_through_mutable_buffer() {
     pstr[0] = 't';
 
     auto s = mm.string();
-    BOOST_ASSERT(std::string("this is a test") == s);
+    REQUIRE(std::string("this is a test") == s);
 
     auto ss = m.string();
-    BOOST_ASSERT(s != ss);
+    REQUIRE(s != ss);
 }
 
-void test_message_sequence() {
+TEST_CASE( "message_sequence", "[message]" ) {
     std::string foo("foo");
     std::string bar("bar");
 
@@ -101,39 +102,21 @@ void test_message_sequence() {
 
     // make a message_vector from a range
     auto res = azmq::to_message_vector(bufs);
-    BOOST_ASSERT(res.size() == bufs.size());
-    BOOST_ASSERT(foo == res[0].string());
-    BOOST_ASSERT(bar == res[1].string());
+    REQUIRE(res.size() == bufs.size());
+    REQUIRE(foo == res[0].string());
+    REQUIRE(bar == res[1].string());
 
     // implicit conversion
     res.push_back(boost::asio::buffer("BAZ"));
-    BOOST_ASSERT(res.size() == bufs.size() + 1);
+    REQUIRE(res.size() == bufs.size() + 1);
 
     // range of const_buffer -> range of message
     auto range = azmq::const_message_range(bufs);
-    BOOST_ASSERT(std::distance(std::begin(bufs), std::end(bufs)) ==
-                 std::distance(std::begin(range), std::end(range)));
+    REQUIRE(std::distance(std::begin(bufs), std::end(bufs)) ==
+            std::distance(std::begin(range), std::end(range)));
 
     auto it = std::begin(range);
     for(auto& buf : bufs) {
-        BOOST_ASSERT(azmq::message(buf) == *it++);
+        REQUIRE(azmq::message(buf) == *it++);
     }
 }
-
-int main(int argc, char **argv) {
-    std::cout << "Testing message operations...";
-    try {
-        test_message_constructors();
-        test_message_copy_operations();
-        test_message_move_operations();
-        test_message_buffer_operations();
-        test_write_through_mutable_buffer();
-        test_message_sequence();
-    } catch (std::exception const& e) {
-        std::cout << "Failure\n" << e.what() << std::endl;
-        return 1;
-    }
-    std::cout << "Success" << std::endl;
-    return 0;
-}
-
