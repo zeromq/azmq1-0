@@ -8,47 +8,34 @@
 */
 #include <azmq/detail/context_ops.hpp>
 
-#define BOOST_ENABLE_ASSERT_HANDLER
-#include <boost/assert.hpp>
 #include <boost/system/error_code.hpp>
 
 #include <string>
 #include <iostream>
 #include <exception>
 
-#include "../assert.ipp"
+#define CATCH_CONFIG_MAIN
+#include "../catch.hpp"
 
-void test_context() {
+
+TEST_CASE( "context_creation", "[context]") {
     auto ctx = azmq::detail::context_ops::get_context();
     auto ctx2 = azmq::detail::context_ops::get_context(true);
-    BOOST_ASSERT_MSG(ctx != ctx2, "expecting ctx != ctx2");
+    REQUIRE(ctx != ctx2);
 
     auto ctx3 = azmq::detail::context_ops::get_context();
-    BOOST_ASSERT_MSG(ctx == ctx3, "expecting ctx == ctx3");
+    REQUIRE(ctx == ctx3);
 }
 
-void test_context_options() {
+TEST_CASE( "context_options", "[context]" ) {
     auto ctx = azmq::detail::context_ops::get_context();
     using io_threads = azmq::detail::context_ops::io_threads;
     boost::system::error_code ec;
     azmq::detail::context_ops::set_option(ctx, io_threads(2), ec);
-    BOOST_ASSERT_MSG(!ec, "error setting io_threads option");
+    REQUIRE(!ec);
 
     io_threads res;
     azmq::detail::context_ops::get_option(ctx, res, ec);
-    BOOST_ASSERT_MSG(!ec, "error getting io_threads option");
-    BOOST_ASSERT(res.value() == 2);
-}
-
-int main(int argc, char **argv) {
-    std::cout << "Testing context operations...";
-    try {
-        test_context();
-        test_context_options();
-    } catch (std::exception const& e) {
-        std::cout << "Failure\n" << e.what() << std::endl;
-        return 1;
-    }
-    std::cout << "Success" << std::endl;
-    return 0;
+    REQUIRE(!ec);
+    REQUIRE(res.value() == 2);
 }
