@@ -39,6 +39,91 @@ TEST_CASE( "message_constructors", "[message]" ) {
     REQUIRE(s == mmstr.string());
 }
 
+char global_buf[1024];
+int global_hint;
+int global_ctr;
+
+
+void free_fn1(void *buf)
+{
+    REQUIRE(buf == &global_buf);
+    ++global_ctr;
+}
+
+void free_fn2(void *buf, void *hint)
+{
+    REQUIRE(buf == &global_buf);
+    REQUIRE(hint == &global_hint);
+    ++global_ctr;
+}
+
+
+TEST_CASE( "deleter", "[message]" ) {
+    global_ctr = 0;
+
+    {
+        azmq::message m1(azmq::nocopy, boost::asio::buffer("static const buf"));
+        REQUIRE(17 == m1.size());
+    }
+
+    {
+        azmq::message m2(azmq::nocopy, boost::asio::buffer(global_buf), [](void *buf){
+            REQUIRE(buf == &global_buf);
+            ++global_ctr;
+        });
+        REQUIRE(sizeof(global_buf) == m2.size());
+    }
+    REQUIRE(1 == global_ctr);
+
+    {
+        azmq::message m3(azmq::nocopy, boost::asio::buffer(global_buf), &global_hint, [](void *buf, void *hint){
+            REQUIRE(buf == global_buf);
+            REQUIRE(hint == &global_hint);
+            ++global_ctr;
+        });
+        REQUIRE(sizeof(global_buf) == m3.size());
+    }
+    REQUIRE(2 == global_ctr);
+
+    {
+        char buf2[16];
+        int x = 42;
+        azmq::message m4(azmq::nocopy, boost::asio::buffer(buf2), [x, &buf2](void *buf){
+            REQUIRE(buf == buf2);
+            REQUIRE(x == 42);
+            ++global_ctr;
+        });
+        REQUIRE(sizeof(buf2) == m4.size());
+    }
+    REQUIRE(3 == global_ctr);
+
+    {
+        azmq::message m5(azmq::nocopy, boost::asio::buffer(global_buf), &global_hint, free_fn2);
+        REQUIRE(sizeof(global_buf) == m5.size());
+    }
+    REQUIRE(4 == global_ctr);
+
+    {
+        azmq::message m6(azmq::nocopy, boost::asio::buffer(global_buf), &free_fn1);
+        REQUIRE(sizeof(global_buf) == m6.size());
+    }
+    REQUIRE(5 == global_ctr);
+
+
+    {
+        azmq::message m7;
+        {
+            azmq::message m8(azmq::nocopy, boost::asio::buffer(global_buf), free_fn1);
+            REQUIRE(sizeof(global_buf) == m8.size());
+            m7 = m8;
+            REQUIRE(sizeof(global_buf) == m7.size());
+
+        }
+        REQUIRE(5 == global_ctr); // msg is not deleted yet
+    }
+    REQUIRE(6 == global_ctr);
+}
+
 TEST_CASE( "message_buffer_operations", "[message]" ) {
     azmq::message mm(42);
     // implicit cast to const_buffer
