@@ -176,6 +176,13 @@ TEST_CASE( "write_through_mutable_buffer", "[message]" ) {
     REQUIRE(s != ss);
 }
 
+TEST_CASE( "message_data", "[message]" ) {
+    azmq::message m("bla-bla");
+
+    REQUIRE(m.size() == 7);
+    REQUIRE(0 == memcmp(m.data(), "bla-bla", 7));
+}
+
 TEST_CASE( "message_sequence", "[message]" ) {
     std::string foo("foo");
     std::string bar("bar");
