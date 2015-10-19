@@ -217,6 +217,10 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             return stm << "message{sz=" << that.size() << "}";
         }
 
+        const void *data() const BOOST_NOEXCEPT {
+            return zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
+        }
+
         size_t size() const { return zmq_msg_size(const_cast<zmq_msg_t*>(&msg_)); }
 
         void rebuild() {
