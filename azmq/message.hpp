@@ -223,32 +223,6 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
         size_t size() const { return zmq_msg_size(const_cast<zmq_msg_t*>(&msg_)); }
 
-        void rebuild() {
-            close();
-            auto rc = zmq_msg_init(&msg_);
-            if (rc)
-                throw boost::system::system_error(make_error_code());
-        }
-
-        void rebuild(size_t size) {
-            close();
-            auto rc = zmq_msg_init_size(&msg_, size);
-            if (rc)
-                throw boost::system::system_error(make_error_code());
-        }
-
-        void rebuild(boost::asio::const_buffer const& buffer) {
-            close();
-            auto sz = boost::asio::buffer_size(buffer);
-            auto rc = zmq_msg_init_size(&msg_, sz);
-            if (rc)
-                throw boost::system::system_error(make_error_code());
-            boost::asio::buffer_copy(boost::asio::buffer(zmq_msg_data(&msg_), sz),
-                                     buffer);
-        }
-
-        void rebuild(std::string const& str) { rebuild(boost::asio::buffer(str)); }
-
         bool more() const {
             return zmq_msg_more(const_cast<zmq_msg_t*>(&msg_)) ? true : false;
         }
@@ -347,7 +321,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
         }
 
         message& dereference() const {
-            msg_.rebuild(*it_);
+            msg_ = message(*it_);
             return msg_;
         }
     };
