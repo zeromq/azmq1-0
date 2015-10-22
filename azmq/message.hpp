@@ -212,11 +212,6 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             return std::string(reinterpret_cast<char const*>(pv), sz);
         }
 
-        friend
-        std::ostream& operator<<(std::ostream& stm, message const& that) {
-            return stm << "message{sz=" << that.size() << "}";
-        }
-
         const void *data() const BOOST_NOEXCEPT {
             return zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
         }
