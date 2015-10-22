@@ -226,10 +226,9 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
         friend detail::socket_ops;
         zmq_msg_t msg_;
 
-        void close() {
+        void close() BOOST_NOEXCEPT {
             auto rc = zmq_msg_close(&msg_);
-            if (rc)
-                throw boost::system::system_error(make_error_code());
+            BOOST_ASSERT_MSG(rc == 0, "zmq_msg_close return non-zero"); (void)rc;
         }
 
         // note, this is a bit fragile, currently the last two bytes in a
