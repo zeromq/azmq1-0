@@ -50,7 +50,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
         using flags_type = int;
 
-        message() BOOST_NOEXCEPT_OR_NOTHROW {
+        message() BOOST_NOEXCEPT {
             auto rc = zmq_msg_init(&msg_);
             BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero"); (void)rc;
         }
@@ -133,14 +133,14 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             : message(boost::asio::buffer(str.data(), str.size()))
         { }
 
-        message(message && rhs) BOOST_NOEXCEPT_OR_NOTHROW
+        message(message && rhs) BOOST_NOEXCEPT
             : msg_(rhs.msg_)
         {
             auto rc = zmq_msg_init(&rhs.msg_);
             BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero"); (void)rc;
         }
 
-        message& operator=(message && rhs) BOOST_NOEXCEPT_OR_NOTHROW {
+        message& operator=(message && rhs) BOOST_NOEXCEPT {
             msg_ = rhs.msg_;
             auto rc = zmq_msg_init(&rhs.msg_);
             BOOST_ASSERT_MSG(rc == 0, "zmq_msg_init return non-zero"); (void)rc;
@@ -167,26 +167,23 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
         ~message() { close(); }
 
-        boost::asio::const_buffer cbuffer() const {
-            auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
-            return boost::asio::buffer(pv, size());
+        boost::asio::const_buffer cbuffer() const BOOST_NOEXCEPT {
+            return boost::asio::buffer(data(), size());
         }
 
-        operator boost::asio::const_buffer() const {
+        operator boost::asio::const_buffer() const BOOST_NOEXCEPT {
             return cbuffer();
         }
 
-        boost::asio::const_buffer buffer() const {
-            auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
-            return boost::asio::buffer(pv, size());
+        boost::asio::const_buffer buffer() const BOOST_NOEXCEPT {
+            return cbuffer();
         }
 
         boost::asio::mutable_buffer buffer() {
             if (is_shared())
                 deep_copy();
 
-            auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
-            return boost::asio::buffer(pv, size());
+            return boost::asio::buffer(const_cast<void *>(data()), size());
         }
 
         template<typename T>
@@ -198,40 +195,36 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             return boost::asio::buffer_copy(target, buffer());
         }
 
-        bool operator==(const message & rhs) const {
-            auto pa = reinterpret_cast<char*>(
-                                zmq_msg_data(const_cast<zmq_msg_t*>(&msg_)));
-            auto pb = reinterpret_cast<char*>(
-                                zmq_msg_data(const_cast<zmq_msg_t*>(&rhs.msg_)));
-            return std::equal(pa, pa + size(), pb);
+        bool operator==(const message & rhs) const BOOST_NOEXCEPT {
+            return !operator!=(rhs);
+        }
+
+        bool operator!=(const message & rhs) const BOOST_NOEXCEPT {
+            const auto sz = size();
+
+            return sz != rhs.size()
+                || 0 != std::memcmp(data(), rhs.data(), sz);
         }
 
         std::string string() const {
-            auto pv = zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
-            auto sz = size();
-            return std::string(reinterpret_cast<char const*>(pv), sz);
+            return std::string(static_cast<const char *>(data()), size());
         }
 
         const void *data() const BOOST_NOEXCEPT {
             return zmq_msg_data(const_cast<zmq_msg_t*>(&msg_));
         }
 
-        size_t size() const { return zmq_msg_size(const_cast<zmq_msg_t*>(&msg_)); }
+        size_t size() const BOOST_NOEXCEPT {
+            return zmq_msg_size(const_cast<zmq_msg_t*>(&msg_));
+        }
 
-        bool more() const {
+        bool more() const BOOST_NOEXCEPT {
             return zmq_msg_more(const_cast<zmq_msg_t*>(&msg_)) ? true : false;
         }
 
     private:
         friend detail::socket_ops;
         zmq_msg_t msg_;
-
-        /*template<class Deleter>
-        static void call_deleter(void *pv, void* hint) {
-            std::unique_ptr<Deleter> deleter(reinterpret_cast<Deleter*>(hint));
-            BOOST_ASSERT_MSG(deleter, "!deleter");
-            (*deleter)(pv);
-        }*/
 
         void close() {
             auto rc = zmq_msg_close(&msg_);
@@ -246,13 +239,13 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             type_offset = sizeof(zmq_msg_t) - 2
         };
 
-        uint8_t flags() const {
+        uint8_t flags() const BOOST_NOEXCEPT {
             auto pm = const_cast<zmq_msg_t*>(&msg_);
             auto p = reinterpret_cast<uint8_t*>(pm);
             return p[flags_offset];
         }
 
-        uint8_t type() const {
+        uint8_t type() const BOOST_NOEXCEPT {
             auto pm = const_cast<zmq_msg_t*>(&msg_);
             auto p = reinterpret_cast<uint8_t*>(pm);
             return p[type_offset];
@@ -265,7 +258,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
             type_cmsg = 104
         };
 
-        bool is_shared() const {
+        bool is_shared() const BOOST_NOEXCEPT {
             // TODO use shared message property if libzmq version >= 4.1
             return (flags() & flag_shared) || type() == type_cmsg;
         }
