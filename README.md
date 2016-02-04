@@ -85,7 +85,7 @@ Further examples may be found in doc/examples
 
 ## Build status
 
-[AZMQ build status](https://78.46.71.115:4433/project.html?projectId=Azmq&guest=1)
+[AZMQ build status](https://136.243.151.173:4433/project.html?projectId=Azmq&guest=1)
 
 ## Copying
 
